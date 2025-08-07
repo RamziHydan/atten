@@ -15,8 +15,37 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+from django.shortcuts import redirect
+
+# Redirect root to dashboard
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return redirect('login')
 
 urlpatterns = [
+    # Admin
     path('admin/', admin.site.urls),
+    
+    # Root redirect
+    path('', root_redirect, name='root'),
+    
+    # Authentication URLs
+    path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    
+    # App URLs
+    path('dashboard/', include('apps.dashboard.urls')),
+    path('attendance/', include('apps.attendance.urls')),
+    path('companies/', include('apps.companies.urls')),
+    path('users/', include('apps.users.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
