@@ -1,87 +1,363 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
-{% block title %}Company Details - {{ block.super }}{% endblock %}
+{% block title %}{{ company.name }} - Company Details - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Company Details</h1>
-            <p class="mt-2 text-gray-600">View and manage company information</p>
-        </div>
-
-        <!-- Company Information Card -->
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Company Information</h2>
-            </div>
-            <div class="p-6">
-                <div class="text-center mb-6">
-                    <div class="mx-auto h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center">
-                        <i class="fas fa-building text-primary-600 text-2xl"></i>
-                    </div>
-                    <h3 class="mt-4 text-xl font-semibold text-gray-900">{{ title }}</h3>
-                    <p class="text-sm text-gray-500">Company ID: {{ company_id }}</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ company.name }}</h1>
+                    <p class="mt-2 text-gray-600">Company overview and management</p>
                 </div>
-
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Status</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                            </span>
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Type</dt>
-                        <dd class="mt-1 text-sm text-gray-900">Technology Company</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Employees</dt>
-                        <dd class="mt-1 text-sm text-gray-900">25+ employees</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Branches</dt>
-                        <dd class="mt-1 text-sm text-gray-900">2 locations</dd>
-                    </div>
-                </dl>
-
-                <div class="mt-8">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">Quick Actions</h4>
-                    <div class="flex flex-wrap gap-3">
-                        <button type="button" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            <i class="fas fa-edit mr-2"></i>
-                            Edit Company
-                        </button>
-                        <button type="button" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            <i class="fas fa-users mr-2"></i>
-                            Manage Employees
-                        </button>
-                        <button type="button" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            <i class="fas fa-map-marker-alt mr-2"></i>
-                            View Locations
-                        </button>
-                    </div>
+                {% if can_manage %}
+                <div class="flex space-x-3">
+                    <a href="{% url 'companies:company_edit' company.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edit Company
+                    </a>
                 </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Additional Information -->
-        <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Employees -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-users text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ total_employees }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="p-6">
-                <div class="text-center text-gray-500">
-                    <i class="fas fa-chart-line text-4xl mb-4"></i>
-                    <p>Company analytics and activity tracking will be displayed here.</p>
-                    <p class="text-sm mt-2">This feature is coming soon!</p>
+
+            <!-- Total Branches -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Branches</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ total_branches }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Departments -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-sitemap text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Departments</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ total_departments }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Groups -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-clock text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Attendance Groups</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ total_attendance_groups }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Company Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Company Information</h2>
+                    </div>
+                    <div class="p-6">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Company Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ company.name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Active
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Owner</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-tie mr-2 text-gray-400"></i>
+                                        {{ company.owner.get_full_name|default:company.owner.username }}
+                                    </div>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Default Radius</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marked-alt mr-2 text-gray-400"></i>
+                                        {{ company.default_radius }} meters
+                                    </div>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Recent Activity</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-plus mr-2 text-green-500"></i>
+                                        {{ recent_employees }} new employee{{ recent_employees|pluralize }} (30 days)
+                                    </div>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">HR Coverage</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="flex items-center text-green-600">
+                                            <i class="fas fa-check mr-1"></i>
+                                            {{ branches_with_hr }} with HR
+                                        </span>
+                                        {% if branches_without_hr > 0 %}
+                                        <span class="flex items-center text-orange-600">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            {{ branches_without_hr }} without HR
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Branches List -->
+                <div class="mt-6 bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-900">Branches</h2>
+                        {% if can_manage %}
+                        <a href="{% url 'companies:branch_create' %}" 
+                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Branch
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="overflow-hidden">
+                        {% if branches %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for branch in branches %}
+                            <li class="px-6 py-4 hover:bg-gray-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-building text-primary-600"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="flex items-center">
+                                                <h3 class="text-sm font-medium text-gray-900">{{ branch.name }}</h3>
+                                                {% if branch.hr_managers.exists %}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                    <i class="fas fa-user-check mr-1"></i>
+                                                    HR Assigned
+                                                </span>
+                                                {% else %}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                    No HR
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-1 flex items-center text-sm text-gray-500">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                {{ branch.address|truncatechars:50 }}
+                                            </div>
+                                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                                <span>
+                                                    <i class="fas fa-sitemap mr-1"></i>
+                                                    {{ branch.department_count }} department{{ branch.department_count|pluralize }}
+                                                </span>
+                                                <span>
+                                                    <i class="fas fa-users mr-1"></i>
+                                                    {{ branch.employee_count }} employee{{ branch.employee_count|pluralize }}
+                                                </span>
+                                                {% if branch.latitude and branch.longitude %}
+                                                <span>
+                                                    <i class="fas fa-map-marked-alt mr-1"></i>
+                                                    {{ branch.radius }}m radius
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'companies:branch_detail' branch.id %}" 
+                                           class="text-primary-600 hover:text-primary-900">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if can_manage %}
+                                        <a href="{% url 'companies:branch_edit' branch.id %}" 
+                                           class="text-gray-400 hover:text-gray-600">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-building text-4xl mb-4"></i>
+                            <p>No branches found</p>
+                            {% if can_manage %}
+                            <p class="text-sm mt-2">
+                                <a href="{% url 'companies:branch_create' %}" class="text-primary-600 hover:text-primary-500">
+                                    Create your first branch
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Employee Roles Breakdown -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Employee Roles</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                    <span class="text-sm text-gray-600">Company Managers</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">{{ role_counts.COMPANY_MANAGER }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                    <span class="text-sm text-gray-600">HR Employees</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">{{ role_counts.HR_EMPLOYEE }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-gray-500 rounded-full mr-3"></div>
+                                    <span class="text-sm text-gray-600">Regular Employees</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">{{ role_counts.EMPLOYEE }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-6 bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            {% if can_manage_hr %}
+                            <a href="{% url 'users:employee_list' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-users mr-2"></i>
+                                Manage Employees
+                            </a>
+                            {% endif %}
+                            {% if can_manage %}
+                            <a href="{% url 'companies:branch_list' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                View All Branches
+                            </a>
+                            <a href="{% url 'attendance:check_in_list' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-clock mr-2"></i>
+                                Attendance Records
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'attendance:reports' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-chart-bar mr-2"></i>
+                                View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="mt-6 bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">System Info</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3 text-sm text-gray-600">
+                            <div class="flex items-center justify-between">
+                                <span>Total Periods:</span>
+                                <span class="font-medium text-gray-900">{{ total_periods }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Active Groups:</span>
+                                <span class="font-medium text-gray-900">{{ total_attendance_groups }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Company ID:</span>
+                                <span class="font-medium text-gray-900">#{{ company.id }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,191 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ company.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'companies:company_detail' company.id %}" 
+                   class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Edit Company</h1>
+                    <p class="mt-2 text-gray-600">Update company information and settings</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Company Details</h2>
+            </div>
+            
+            <form method="post" class="p-6">
+                {% csrf_token %}
+                
+                <div class="space-y-6">
+                    <!-- Company Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">
+                            Company Name <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   value="{{ company.name }}"
+                                   required
+                                   class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="Enter company name">
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            The official name of your company or organization.
+                        </p>
+                    </div>
+
+                    <!-- Default Radius -->
+                    <div>
+                        <label for="default_radius" class="block text-sm font-medium text-gray-700">
+                            Default Attendance Radius (meters) <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input type="number" 
+                                   id="default_radius" 
+                                   name="default_radius" 
+                                   value="{{ company.default_radius }}"
+                                   min="10" 
+                                   max="10000"
+                                   required
+                                   class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="100">
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Default geofence radius for attendance check-ins. This applies to branches that don't have a specific radius set. Range: 10-10,000 meters.
+                        </p>
+                    </div>
+
+                    <!-- Company Information Display -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-gray-900 mb-3">Company Information</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Company ID:</span>
+                                <span class="ml-2 font-medium text-gray-900">#{{ company.id }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Owner:</span>
+                                <span class="ml-2 font-medium text-gray-900">{{ company.owner.get_full_name|default:company.owner.username }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Created:</span>
+                                <span class="ml-2 font-medium text-gray-900">{{ company.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Last Updated:</span>
+                                <span class="ml-2 font-medium text-gray-900">{{ company.updated_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-8 flex items-center justify-between">
+                    <a href="{% url 'companies:company_detail' company.id %}" 
+                       class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Company
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        Important Notes
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Changing the company name will update it across the entire system</li>
+                            <li>The default radius affects all branches without a specific radius setting</li>
+                            <li>Only company managers and super admins can edit company details</li>
+                            <li>Changes take effect immediately after saving</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameField = document.getElementById('name');
+    const radiusField = document.getElementById('default_radius');
+
+    // Real-time validation
+    nameField.addEventListener('input', function() {
+        const name = this.value.trim();
+        if (!name) {
+            this.setCustomValidity('Company name is required');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    radiusField.addEventListener('input', function() {
+        const radius = parseInt(this.value);
+        if (isNaN(radius) || radius < 10 || radius > 10000) {
+            this.setCustomValidity('Radius must be between 10 and 10,000 meters');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const name = nameField.value.trim();
+        const radius = parseInt(radiusField.value);
+        let isValid = true;
+
+        // Validate company name
+        if (!name) {
+            nameField.setCustomValidity('Company name is required');
+            isValid = false;
+        } else {
+            nameField.setCustomValidity('');
+        }
+
+        // Validate radius
+        if (isNaN(radius) || radius < 10 || radius > 10000) {
+            radiusField.setCustomValidity('Radius must be between 10 and 10,000 meters');
+            isValid = false;
+        } else {
+            radiusField.setCustomValidity('');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+</script>
+{% endblock %}

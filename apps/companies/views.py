@@ -41,18 +41,51 @@ def company_detail(request, company_id):
             raise Http404("Company not found")
         company = get_object_or_404(Company, id=company_id)
     
-    # Get branches with department counts
+    # Get branches with detailed statistics
     branches = Branch.objects.filter(
         company=company
-    ).prefetch_related('departments').annotate(
-        department_count=Count('departments'),
-        employee_count=Count('departments__departmentmembership', distinct=True)
+    ).prefetch_related(
+        'departments',
+        'hr_managers',
+        'departments__departmentmembership_set__employee'
+    ).annotate(
+        department_count=Count('departments', distinct=True)
     ).order_by('name')
     
     # Get company statistics
     total_employees = User.objects.filter(company=company, is_active=True).count()
     total_departments = Department.objects.filter(branch__company=company).count()
     total_attendance_groups = AttendanceGroup.objects.filter(company=company).count()
+    
+    # Get role-based employee counts
+    role_stats = User.objects.filter(company=company, is_active=True).values('role').annotate(
+        count=Count('id')
+    ).order_by('role')
+    
+    # Convert role stats to a more readable format
+    role_counts = {
+        UserRole.COMPANY_MANAGER: 0,
+        UserRole.HR_EMPLOYEE: 0,
+        UserRole.EMPLOYEE: 0,
+    }
+    for stat in role_stats:
+        role_counts[stat['role']] = stat['count']
+    
+    # Get recent activity (employees added in last 30 days)
+    from datetime import datetime, timedelta
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    recent_employees = User.objects.filter(
+        company=company,
+        date_joined__gte=thirty_days_ago
+    ).count()
+    
+    # Get branches with HR managers assigned
+    branches_with_hr = branches.filter(hr_managers__isnull=False).count()
+    branches_without_hr = branches.count() - branches_with_hr
+    
+    # Get attendance groups statistics
+    attendance_groups = AttendanceGroup.objects.filter(company=company).prefetch_related('periods')
+    total_periods = sum(group.periods.count() for group in attendance_groups)
     
     context = {
         'company': company,
@@ -61,7 +94,13 @@ def company_detail(request, company_id):
         'total_departments': total_departments,
         'total_branches': branches.count(),
         'total_attendance_groups': total_attendance_groups,
+        'total_periods': total_periods,
+        'role_counts': role_counts,
+        'recent_employees': recent_employees,
+        'branches_with_hr': branches_with_hr,
+        'branches_without_hr': branches_without_hr,
         'can_manage': user.role in [UserRole.COMPANY_MANAGER, UserRole.SUPER_ADMIN],
+        'can_manage_hr': user.role in [UserRole.COMPANY_MANAGER, UserRole.SUPER_ADMIN, UserRole.HR_EMPLOYEE],
     }
     
     return render(request, 'companies/company_detail.html', context)
@@ -576,3 +615,67 @@ def department_create(request, branch_id):
     }
     
     return render(request, 'companies/department_create.html', context)
+
+
+@login_required
+def company_edit(request, company_id):
+    """Edit company details"""
+    user = request.user
+    
+    # Get the company - ensure user has access
+    if user.role == UserRole.SUPER_ADMIN:
+        company = get_object_or_404(Company, id=company_id)
+    else:
+        # Ensure user can only edit their own company
+        if not user.company or user.company.id != company_id:
+            raise Http404("Company not found")
+        company = get_object_or_404(Company, id=company_id)
+    
+    # Check if user can manage this company
+    if user.role not in [UserRole.COMPANY_MANAGER, UserRole.SUPER_ADMIN]:
+        messages.error(request, 'You do not have permission to edit this company.')
+        return redirect('companies:company_detail', company_id=company.id)
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            name = request.POST.get('name', '').strip()
+            default_radius = request.POST.get('default_radius', '').strip()
+            
+            # Validate required fields
+            if not name:
+                messages.error(request, 'Company name is required.')
+                return render(request, 'companies/company_edit.html', {'company': company})
+            
+            # Validate default_radius
+            try:
+                radius_value = int(default_radius) if default_radius else 100
+                if radius_value < 10 or radius_value > 10000:
+                    messages.error(request, 'Default radius must be between 10 and 10,000 meters.')
+                    return render(request, 'companies/company_edit.html', {'company': company})
+            except ValueError:
+                messages.error(request, 'Default radius must be a valid number.')
+                return render(request, 'companies/company_edit.html', {'company': company})
+            
+            # Check if company name already exists (excluding current company)
+            if Company.objects.filter(name=name).exclude(id=company.id).exists():
+                messages.error(request, f'A company named "{name}" already exists.')
+                return render(request, 'companies/company_edit.html', {'company': company})
+            
+            # Update company
+            company.name = name
+            company.default_radius = radius_value
+            company.save()
+            
+            messages.success(request, f'Company "{company.name}" updated successfully!')
+            return redirect('companies:company_detail', company_id=company.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error updating company: {str(e)}')
+    
+    # GET request - show form
+    context = {
+        'company': company,
+    }
+    
+    return render(request, 'companies/company_edit.html', context)

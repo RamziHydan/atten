@@ -6,6 +6,7 @@ app_name = 'companies'
 urlpatterns = [
     # Company management
     path('<int:company_id>/', views.company_detail, name='company_detail'),
+    path('<int:company_id>/edit/', views.company_edit, name='company_edit'),
     
     # Branch management
     path('branches/', views.branch_list, name='branch_list'),
