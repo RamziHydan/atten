@@ -1,0 +1,387 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ group.name }} - Attendance Group - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'attendance:group_detail' group.id %}" 
+                   class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Edit Attendance Group</h1>
+                    <p class="mt-2 text-gray-600">Update attendance location and settings</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Group Details</h2>
+                    </div>
+                    
+                    <form method="post" class="p-6">
+                        {% csrf_token %}
+                        
+                        <div class="space-y-6">
+                            <!-- Group Name -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">
+                                    Group Name <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1">
+                                    <input type="text" 
+                                           id="name" 
+                                           name="name" 
+                                           value="{{ group.name }}"
+                                           required
+                                           class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                           placeholder="e.g., Main Office, Warehouse A">
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    A descriptive name for this attendance group.
+                                </p>
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-gray-700">
+                                    Description
+                                </label>
+                                <div class="mt-1">
+                                    <textarea id="description" 
+                                              name="description" 
+                                              rows="3"
+                                              class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                              placeholder="Optional description of this attendance group">{{ group.description }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Branch Selection -->
+                            <div>
+                                <label for="branch" class="block text-sm font-medium text-gray-700">
+                                    Branch <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1">
+                                    <select id="branch" 
+                                            name="branch" 
+                                            required
+                                            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        <option value="">Select a branch</option>
+                                        {% for branch in branches %}
+                                        <option value="{{ branch.id }}" {% if branch.id == group.branch.id %}selected{% endif %}>
+                                            {{ branch.name }} - {{ branch.company.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    The branch this attendance group belongs to.
+                                </p>
+                            </div>
+
+                            <!-- Location Coordinates -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="latitude" class="block text-sm font-medium text-gray-700">
+                                        Latitude <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="latitude" 
+                                               name="latitude" 
+                                               value="{{ group.latitude }}"
+                                               step="0.000001"
+                                               min="-90"
+                                               max="90"
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                               placeholder="40.712776">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="longitude" class="block text-sm font-medium text-gray-700">
+                                        Longitude <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="longitude" 
+                                               name="longitude" 
+                                               value="{{ group.longitude }}"
+                                               step="0.000001"
+                                               min="-180"
+                                               max="180"
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                               placeholder="-74.005974">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Radius -->
+                            <div>
+                                <label for="radius" class="block text-sm font-medium text-gray-700">
+                                    Check-in Radius (meters) <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1">
+                                    <input type="number" 
+                                           id="radius" 
+                                           name="radius" 
+                                           value="{{ group.radius }}"
+                                           min="10"
+                                           max="5000"
+                                           required
+                                           class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    Employees must be within this radius to check in/out. Range: 10-5000 meters.
+                                </p>
+                            </div>
+
+                            <!-- Location Helper -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-map-marker-alt text-blue-400"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-blue-800">
+                                            Location Helper
+                                        </h3>
+                                        <div class="mt-2 text-sm text-blue-700">
+                                            <button type="button" 
+                                                    id="getCurrentLocation"
+                                                    class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i class="fas fa-crosshairs mr-2"></i>
+                                                Use Current Location
+                                            </button>
+                                            <p class="mt-2">Click to automatically update coordinates to your current location.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="mt-8 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <a href="{% url 'attendance:group_detail' group.id %}" 
+                                   class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    Cancel
+                                </a>
+                                <form method="post" action="{% url 'attendance:group_delete' group.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('Are you sure you want to delete this attendance group? This action cannot be undone.')"
+                                            class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        <i class="fas fa-trash mr-2"></i>
+                                        Delete Group
+                                    </button>
+                                </form>
+                            </div>
+                            <button type="submit" 
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-save mr-2"></i>
+                                Update Group
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Current Information -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Current Information</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Created:</span>
+                                <p class="text-sm text-gray-900">{{ group.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Last Updated:</span>
+                                <p class="text-sm text-gray-900">{{ group.updated_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Status:</span>
+                                <p class="text-sm text-gray-900">
+                                    {% if group.is_active %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-pause-circle mr-1"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Assigned Employees:</span>
+                                <p class="text-sm text-gray-900">{{ group.employees.count }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Work Periods:</span>
+                                <p class="text-sm text-gray-900">{{ group.periods.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">
+                                Important Notes
+                            </h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Changing location will affect all future check-ins</li>
+                                    <li>Employees currently checked in will not be affected</li>
+                                    <li>Consider notifying employees of location changes</li>
+                                    <li>Deleting this group will deactivate all associated periods</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation and location helper
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameField = document.getElementById('name');
+    const branchField = document.getElementById('branch');
+    const latitudeField = document.getElementById('latitude');
+    const longitudeField = document.getElementById('longitude');
+    const radiusField = document.getElementById('radius');
+
+    // Current location button
+    document.getElementById('getCurrentLocation').addEventListener('click', function() {
+        const button = this;
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Getting Location...';
+        button.disabled = true;
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    latitudeField.value = position.coords.latitude.toFixed(6);
+                    longitudeField.value = position.coords.longitude.toFixed(6);
+                    
+                    // Reset button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    // Show success message
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    toast.innerHTML = '<i class="fas fa-check mr-2"></i>Location updated successfully!';
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 3000);
+                },
+                function(error) {
+                    // Reset button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    let errorMessage = 'Unable to get your location.';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location access denied. Please enable location permissions.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                    }
+                    
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    toast.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>' + errorMessage;
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 5000);
+                }
+            );
+        } else {
+            // Reset button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            alert('Geolocation is not supported by this browser.');
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = [nameField, branchField, latitudeField, longitudeField, radiusField];
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.setCustomValidity('This field is required');
+                isValid = false;
+            } else {
+                field.setCustomValidity('');
+            }
+        });
+
+        // Coordinate validation
+        const lat = parseFloat(latitudeField.value);
+        const lng = parseFloat(longitudeField.value);
+        const radius = parseInt(radiusField.value);
+
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+            latitudeField.setCustomValidity('Latitude must be between -90 and 90 degrees');
+            isValid = false;
+        }
+
+        if (isNaN(lng) || lng < -180 || lng > 180) {
+            longitudeField.setCustomValidity('Longitude must be between -180 and 180 degrees');
+            isValid = false;
+        }
+
+        if (isNaN(radius) || radius < 10 || radius > 5000) {
+            radiusField.setCustomValidity('Radius must be between 10 and 5000 meters');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,498 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} - Attendance Group - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'attendance:group_list' %}" 
+                       class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ group.name }}</h1>
+                        <p class="mt-2 text-gray-600">{{ group.company.name }} - {{ group.branch.name }}</p>
+                    </div>
+                </div>
+                {% if can_edit %}
+                <div class="flex space-x-3">
+                    <a href="{% url 'attendance:group_edit' group.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edit Group
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-users text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Employees</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ employees.count }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-clock text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Periods</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ periods.count }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-map-marked-alt text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Radius</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ group.radius }}m</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                                <i class="fas fa-check-circle text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Recent Check-ins</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ recent_checkins.count }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Group Information -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Group Information</h2>
+                    </div>
+                    <div class="p-6">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Group Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ group.name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {% if group.is_active %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-pause-circle mr-1"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Company</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ group.company.name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Branch</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ group.branch.name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ group.latitude|floatformat:6 }}, {{ group.longitude|floatformat:6 }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Check-in Radius</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ group.radius }} meters</dd>
+                            </div>
+                            {% if group.description %}
+                            <div class="sm:col-span-2">
+                                <dt class="text-sm font-medium text-gray-500">Description</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ group.description }}</dd>
+                            </div>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Work Periods -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-900">Work Periods</h2>
+                        {% if can_edit %}
+                        <a href="{% url 'attendance:period_create' group.id %}" 
+                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Period
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="overflow-hidden">
+                        {% if periods %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for period in periods %}
+                            <li class="px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900">{{ period.name }}</h3>
+                                        <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                            <span>
+                                                <i class="fas fa-clock mr-1"></i>
+                                                {{ period.start_time|time:"H:i" }} - {{ period.end_time|time:"H:i" }}
+                                            </span>
+                                            <span>
+                                                <i class="fas fa-calendar mr-1"></i>
+                                                {% for day in period.weekday_names %}{{ day }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                            </span>
+                                        </div>
+                                        <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                            <span>Grace: {{ period.late_checkin_grace_minutes }}min late, {{ period.early_checkout_grace_minutes }}min early</span>
+                                        </div>
+                                    </div>
+                                    {% if can_edit %}
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'attendance:period_edit' period.id %}" 
+                                           class="text-gray-400 hover:text-gray-600"
+                                           title="Edit Period">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                onclick="if(confirm('Are you sure you want to deactivate this period?')) { window.location.href='{% url 'attendance:period_delete' period.id %}'; }"
+                                                class="text-red-400 hover:text-red-600"
+                                                title="Deactivate Period">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-clock text-4xl mb-4"></i>
+                            <p>No work periods defined</p>
+                            {% if can_edit %}
+                            <p class="text-sm mt-2">
+                                <button type="button" class="text-primary-600 hover:text-primary-500">
+                                    Add your first work period
+                                </button>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Assigned Employees -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-900">Assigned Employees</h2>
+                        {% if can_edit %}
+                        <a href="{% url 'attendance:group_manage_employees' group.id %}" 
+                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <i class="fas fa-users mr-2"></i>
+                            Manage Employees
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="overflow-hidden">
+                        {% if employees %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for employee in employees %}
+                            <li class="px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-600"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <h3 class="text-sm font-medium text-gray-900">{{ employee.get_full_name|default:employee.username }}</h3>
+                                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                                <span>
+                                                    <i class="fas fa-envelope mr-1"></i>
+                                                    {{ employee.email }}
+                                                </span>
+                                                <span>
+                                                    <i class="fas fa-id-badge mr-1"></i>
+                                                    {{ employee.get_role_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if can_edit %}
+                                    <div class="flex items-center space-x-2">
+                                        <button type="button" 
+                                                onclick="removeEmployee({{ employee.id }})"
+                                                class="text-red-400 hover:text-red-600"
+                                                title="Remove from Group">
+                                            <i class="fas fa-user-minus"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl mb-4"></i>
+                            <p>No employees assigned</p>
+                            {% if can_edit %}
+                            <p class="text-sm mt-2">
+                                <a href="{% url 'attendance:group_manage_employees' group.id %}" 
+                                   class="text-primary-600 hover:text-primary-500">
+                                    Assign your first employee
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Check-ins -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Recent Check-ins</h2>
+                    </div>
+                    <div class="overflow-hidden">
+                        {% if recent_checkins %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for checkin in recent_checkins %}
+                            <li class="px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                                {% if checkin.type == 'IN' %}
+                                                <i class="fas fa-sign-in-alt text-green-600 text-sm"></i>
+                                                {% else %}
+                                                <i class="fas fa-sign-out-alt text-red-600 text-sm"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ checkin.employee.get_full_name|default:checkin.employee.username }}
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                {{ checkin.type|capfirst }} at {{ checkin.timestamp|date:"M d, H:i" }}
+                                                {% if checkin.period %}
+                                                - {{ checkin.period.name }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ checkin.timestamp|timesince }} ago
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No recent check-ins</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Assigned Employees -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-medium text-gray-900">Assigned Employees</h2>
+                        {% if can_edit %}
+                        <button type="button" 
+                                class="text-primary-600 hover:text-primary-900"
+                                title="Manage Employees">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="overflow-hidden">
+                        {% if employees %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for employee in employees %}
+                            <li class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-gray-600 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ employee.get_full_name|default:employee.username }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">{{ employee.role|title }}</p>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl mb-4"></i>
+                            <p>No employees assigned</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            {% if can_edit %}
+                            <button type="button" 
+                                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-users mr-2"></i>
+                                Manage Employees
+                            </button>
+                            <button type="button" 
+                                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-clock mr-2"></i>
+                                Manage Periods
+                            </button>
+                            {% endif %}
+                            <a href="{% url 'attendance:check_in_list' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-history mr-2"></i>
+                                View All Check-ins
+                            </a>
+                            <a href="{% url 'attendance:reports' %}" 
+                               class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-chart-bar mr-2"></i>
+                                Generate Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Remove employee functionality
+function removeEmployee(employeeId) {
+    if (!confirm('Are you sure you want to remove this employee from the group?')) {
+        return;
+    }
+    
+    fetch(`{% url 'attendance:group_remove_employee' group.id 0 %}`.replace('0', employeeId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showToast(data.message, 'success');
+            // Reload page to update employee list
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while removing the employee.', 'error');
+    });
+}
+
+// Toast notification function
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 text-white ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'} mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        document.body.removeChild(toast);
+    }, 3000);
+}
+
+// Add CSRF token to page if not already present
+if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = '{{ csrf_token }}';
+    document.body.appendChild(csrfToken);
+}
+</script>
+{% endblock %}

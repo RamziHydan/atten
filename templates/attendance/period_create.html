@@ -1,0 +1,375 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Create Period - {{ group.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'attendance:group_detail' group.id %}" 
+                   class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Create Work Period</h1>
+                    <p class="mt-2 text-gray-600">Add a new work schedule for {{ group.name }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Period Details</h2>
+                    </div>
+                    
+                    <form method="post" class="p-6" id="periodForm">
+                        {% csrf_token %}
+                        
+                        <div class="space-y-6">
+                            <!-- Period Name -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">
+                                    Period Name <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1">
+                                    <input type="text" 
+                                           id="name" 
+                                           name="name" 
+                                           required
+                                           class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                           placeholder="e.g., Morning Shift, Day Shift, Evening Shift">
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    A descriptive name for this work period.
+                                </p>
+                            </div>
+
+                            <!-- Time Range -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="start_time" class="block text-sm font-medium text-gray-700">
+                                        Start Time <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="time" 
+                                               id="start_time" 
+                                               name="start_time" 
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="end_time" class="block text-sm font-medium text-gray-700">
+                                        End Time <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="time" 
+                                               id="end_time" 
+                                               name="end_time" 
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Working Days -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">
+                                    Working Days <span class="text-red-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="1" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Monday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="2" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Tuesday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="3" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Wednesday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="4" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Thursday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="5" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Friday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="6" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Saturday</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="7" 
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">Sunday</span>
+                                    </label>
+                                </div>
+                                <div class="mt-2 flex space-x-2">
+                                    <button type="button" id="selectWeekdays" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Select Weekdays
+                                    </button>
+                                    <span class="text-xs text-gray-400">|</span>
+                                    <button type="button" id="selectAll" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Select All
+                                    </button>
+                                    <span class="text-xs text-gray-400">|</span>
+                                    <button type="button" id="clearAll" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Grace Periods -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="late_checkin_grace_minutes" class="block text-sm font-medium text-gray-700">
+                                        Late Check-in Grace (minutes)
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="late_checkin_grace_minutes" 
+                                               name="late_checkin_grace_minutes" 
+                                               value="15"
+                                               min="0"
+                                               max="120"
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Minutes after start time before marking as late.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="early_checkout_grace_minutes" class="block text-sm font-medium text-gray-700">
+                                        Early Check-out Grace (minutes)
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="early_checkout_grace_minutes" 
+                                               name="early_checkout_grace_minutes" 
+                                               value="15"
+                                               min="0"
+                                               max="120"
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Minutes before end time before marking as early.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="mt-8 flex items-center justify-between">
+                            <a href="{% url 'attendance:group_detail' group.id %}" 
+                               class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                Cancel
+                            </a>
+                            <button type="submit" 
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Period
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Group Information -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Attendance Group</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Name:</span>
+                                <p class="text-sm text-gray-900">{{ group.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Branch:</span>
+                                <p class="text-sm text-gray-900">{{ group.branch.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Company:</span>
+                                <p class="text-sm text-gray-900">{{ group.company.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Current Periods:</span>
+                                <p class="text-sm text-gray-900">{{ group.periods.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Panel -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Period Preview</h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="periodPreview" class="space-y-3">
+                            <div class="text-sm text-gray-500">
+                                Fill in the form to see a preview of your period.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-lightbulb text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">
+                                Tips
+                            </h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Choose descriptive names like "Morning Shift" or "Day Shift"</li>
+                                    <li>Grace periods help account for minor delays</li>
+                                    <li>You can create multiple periods for different schedules</li>
+                                    <li>Periods can overlap for flexible scheduling</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('periodForm');
+    const nameField = document.getElementById('name');
+    const startTimeField = document.getElementById('start_time');
+    const endTimeField = document.getElementById('end_time');
+    const weekdayCheckboxes = document.querySelectorAll('input[name="weekdays"]');
+    const previewDiv = document.getElementById('periodPreview');
+
+    // Weekday selection helpers
+    document.getElementById('selectWeekdays').addEventListener('click', function() {
+        weekdayCheckboxes.forEach((checkbox, index) => {
+            checkbox.checked = index < 5; // Monday to Friday (0-4)
+        });
+        updatePreview();
+    });
+
+    document.getElementById('selectAll').addEventListener('click', function() {
+        weekdayCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updatePreview();
+    });
+
+    document.getElementById('clearAll').addEventListener('click', function() {
+        weekdayCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updatePreview();
+    });
+
+    // Live preview update
+    function updatePreview() {
+        const name = nameField.value.trim();
+        const startTime = startTimeField.value;
+        const endTime = endTimeField.value;
+        const selectedDays = Array.from(weekdayCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => {
+                const dayNames = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                return dayNames[parseInt(cb.value)];
+            });
+
+        if (!name && !startTime && !endTime && selectedDays.length === 0) {
+            previewDiv.innerHTML = '<div class="text-sm text-gray-500">Fill in the form to see a preview of your period.</div>';
+            return;
+        }
+
+        let previewHtml = '<div class="space-y-2">';
+        
+        if (name) {
+            previewHtml += `<div class="flex items-center space-x-2">
+                <i class="fas fa-clock text-gray-400"></i>
+                <span class="font-medium text-gray-900">${name}</span>
+            </div>`;
+        }
+
+        if (startTime && endTime) {
+            previewHtml += `<div class="flex items-center space-x-2">
+                <i class="fas fa-time text-gray-400"></i>
+                <span class="text-sm text-gray-700">${startTime} - ${endTime}</span>
+            </div>`;
+        }
+
+        if (selectedDays.length > 0) {
+            previewHtml += `<div class="flex items-start space-x-2">
+                <i class="fas fa-calendar text-gray-400 mt-0.5"></i>
+                <div class="flex flex-wrap gap-1">
+                    ${selectedDays.map(day => 
+                        `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800">${day}</span>`
+                    ).join('')}
+                </div>
+            </div>`;
+        }
+
+        previewHtml += '</div>';
+        previewDiv.innerHTML = previewHtml;
+    }
+
+    // Add event listeners for live preview
+    nameField.addEventListener('input', updatePreview);
+    startTimeField.addEventListener('change', updatePreview);
+    endTimeField.addEventListener('change', updatePreview);
+    weekdayCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updatePreview);
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const selectedWeekdays = Array.from(weekdayCheckboxes).filter(cb => cb.checked);
+        
+        if (selectedWeekdays.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one working day.');
+            return;
+        }
+
+        if (startTimeField.value && endTimeField.value) {
+            if (startTimeField.value >= endTimeField.value) {
+                e.preventDefault();
+                alert('End time must be after start time.');
+                return;
+            }
+        }
+    });
+
+    // Initialize preview
+    updatePreview();
+});
+</script>
+{% endblock %}

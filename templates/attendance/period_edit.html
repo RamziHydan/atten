@@ -1,0 +1,371 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ period.name }} - Period - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'attendance:group_detail' period.group.id %}" 
+                   class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Edit Work Period</h1>
+                    <p class="mt-2 text-gray-600">Update schedule for {{ period.name }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Period Details</h2>
+                    </div>
+                    
+                    <form method="post" class="p-6" id="periodForm">
+                        {% csrf_token %}
+                        
+                        <div class="space-y-6">
+                            <!-- Period Name -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">
+                                    Period Name <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1">
+                                    <input type="text" 
+                                           id="name" 
+                                           name="name" 
+                                           value="{{ period.name }}"
+                                           required
+                                           class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                           placeholder="e.g., Morning Shift, Day Shift, Evening Shift">
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    A descriptive name for this work period.
+                                </p>
+                            </div>
+
+                            <!-- Time Range -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="start_time" class="block text-sm font-medium text-gray-700">
+                                        Start Time <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="time" 
+                                               id="start_time" 
+                                               name="start_time" 
+                                               value="{{ period.start_time|time:'H:i' }}"
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="end_time" class="block text-sm font-medium text-gray-700">
+                                        End Time <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="time" 
+                                               id="end_time" 
+                                               name="end_time" 
+                                               value="{{ period.end_time|time:'H:i' }}"
+                                               required
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Working Days -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">
+                                    Working Days <span class="text-red-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {% for day_num, day_name in weekday_choices %}
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="weekdays" value="{{ day_num }}" 
+                                               {% if day_num in period.weekday_list %}checked{% endif %}
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700">{{ day_name }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                <div class="mt-2 flex space-x-2">
+                                    <button type="button" id="selectWeekdays" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Select Weekdays
+                                    </button>
+                                    <span class="text-xs text-gray-400">|</span>
+                                    <button type="button" id="selectAll" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Select All
+                                    </button>
+                                    <span class="text-xs text-gray-400">|</span>
+                                    <button type="button" id="clearAll" 
+                                            class="text-xs text-primary-600 hover:text-primary-800">
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Grace Periods -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="late_checkin_grace_minutes" class="block text-sm font-medium text-gray-700">
+                                        Late Check-in Grace (minutes)
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="late_checkin_grace_minutes" 
+                                               name="late_checkin_grace_minutes" 
+                                               value="{{ period.late_checkin_grace_minutes }}"
+                                               min="0"
+                                               max="120"
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Minutes after start time before marking as late.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="early_checkout_grace_minutes" class="block text-sm font-medium text-gray-700">
+                                        Early Check-out Grace (minutes)
+                                    </label>
+                                    <div class="mt-1">
+                                        <input type="number" 
+                                               id="early_checkout_grace_minutes" 
+                                               name="early_checkout_grace_minutes" 
+                                               value="{{ period.early_checkout_grace_minutes }}"
+                                               min="0"
+                                               max="120"
+                                               class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Minutes before end time before marking as early.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="mt-8 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <a href="{% url 'attendance:group_detail' period.group.id %}" 
+                                   class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    Cancel
+                                </a>
+                                <form method="post" action="{% url 'attendance:period_delete' period.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('Are you sure you want to delete this period? This action cannot be undone.')"
+                                            class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        <i class="fas fa-trash mr-2"></i>
+                                        Delete Period
+                                    </button>
+                                </form>
+                            </div>
+                            <button type="submit" 
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-save mr-2"></i>
+                                Update Period
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Current Information -->
+                <div class="bg-white shadow rounded-lg mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Current Information</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Group:</span>
+                                <p class="text-sm text-gray-900">{{ period.group.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Branch:</span>
+                                <p class="text-sm text-gray-900">{{ period.group.branch.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Created:</span>
+                                <p class="text-sm text-gray-900">{{ period.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Last Updated:</span>
+                                <p class="text-sm text-gray-900">{{ period.updated_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Status:</span>
+                                <p class="text-sm text-gray-900">
+                                    {% if period.is_active %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-pause-circle mr-1"></i>
+                                        Inactive
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Panel -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Period Preview</h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="periodPreview" class="space-y-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">
+                                Important Notes
+                            </h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Changes will affect future attendance tracking</li>
+                                    <li>Current check-ins will not be affected</li>
+                                    <li>Consider notifying employees of schedule changes</li>
+                                    <li>Deleting this period will deactivate it permanently</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('periodForm');
+    const nameField = document.getElementById('name');
+    const startTimeField = document.getElementById('start_time');
+    const endTimeField = document.getElementById('end_time');
+    const weekdayCheckboxes = document.querySelectorAll('input[name="weekdays"]');
+    const previewDiv = document.getElementById('periodPreview');
+
+    // Weekday selection helpers
+    document.getElementById('selectWeekdays').addEventListener('click', function() {
+        weekdayCheckboxes.forEach((checkbox, index) => {
+            checkbox.checked = index < 5; // Monday to Friday (0-4)
+        });
+        updatePreview();
+    });
+
+    document.getElementById('selectAll').addEventListener('click', function() {
+        weekdayCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updatePreview();
+    });
+
+    document.getElementById('clearAll').addEventListener('click', function() {
+        weekdayCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updatePreview();
+    });
+
+    // Live preview update
+    function updatePreview() {
+        const name = nameField.value.trim();
+        const startTime = startTimeField.value;
+        const endTime = endTimeField.value;
+        const selectedDays = Array.from(weekdayCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => {
+                const dayNames = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                return dayNames[parseInt(cb.value)];
+            });
+
+        let previewHtml = '<div class="space-y-2">';
+        
+        if (name) {
+            previewHtml += `<div class="flex items-center space-x-2">
+                <i class="fas fa-clock text-gray-400"></i>
+                <span class="font-medium text-gray-900">${name}</span>
+            </div>`;
+        }
+
+        if (startTime && endTime) {
+            previewHtml += `<div class="flex items-center space-x-2">
+                <i class="fas fa-time text-gray-400"></i>
+                <span class="text-sm text-gray-700">${startTime} - ${endTime}</span>
+            </div>`;
+        }
+
+        if (selectedDays.length > 0) {
+            previewHtml += `<div class="flex items-start space-x-2">
+                <i class="fas fa-calendar text-gray-400 mt-0.5"></i>
+                <div class="flex flex-wrap gap-1">
+                    ${selectedDays.map(day => 
+                        `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800">${day}</span>`
+                    ).join('')}
+                </div>
+            </div>`;
+        }
+
+        previewHtml += '</div>';
+        previewDiv.innerHTML = previewHtml;
+    }
+
+    // Add event listeners for live preview
+    nameField.addEventListener('input', updatePreview);
+    startTimeField.addEventListener('change', updatePreview);
+    endTimeField.addEventListener('change', updatePreview);
+    weekdayCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updatePreview);
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const selectedWeekdays = Array.from(weekdayCheckboxes).filter(cb => cb.checked);
+        
+        if (selectedWeekdays.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one working day.');
+            return;
+        }
+
+        if (startTimeField.value && endTimeField.value) {
+            if (startTimeField.value >= endTimeField.value) {
+                e.preventDefault();
+                alert('End time must be after start time.');
+                return;
+            }
+        }
+    });
+
+    // Initialize preview
+    updatePreview();
+});
+</script>
+{% endblock %}
