@@ -1,0 +1,259 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ employee.get_full_name }} - Employee Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ employee.get_full_name }}</h1>
+            <p class="text-gray-600 mt-2">Employee Details</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'users:employee_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to List
+            </a>
+            {% if user.can_manage_hr %}
+            <a href="{% url 'users:employee_edit' employee.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                <i class="fas fa-edit mr-2"></i>Edit Employee
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Employee Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Information -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.username }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.email }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Role</label>
+                        <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                            {% if employee.role == 'SUPER_ADMIN' %}bg-red-100 text-red-800
+                            {% elif employee.role == 'COMPANY_MANAGER' %}bg-purple-100 text-purple-800
+                            {% elif employee.role == 'HR_EMPLOYEE' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ employee.get_role_display }}
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        {% if employee.is_active %}
+                            <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                Inactive
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date Joined</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.date_joined|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Information -->
+            {% if employee.profile %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Profile Information</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    {% if employee.profile.bio %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Bio</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.profile.bio }}</p>
+                    </div>
+                    {% endif %}
+                    {% if employee.profile.address %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Address</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ employee.profile.address }}</p>
+                    </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% if employee.profile.emergency_contact_name %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Emergency Contact</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ employee.profile.emergency_contact_name }}</p>
+                        </div>
+                        {% endif %}
+                        {% if employee.profile.emergency_contact_phone %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Emergency Phone</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ employee.profile.emergency_contact_phone }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Department Assignments -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Department Assignments</h2>
+                {% if department_memberships %}
+                    <div class="space-y-3">
+                        {% for membership in department_memberships %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <h3 class="font-medium text-gray-900">{{ membership.department.name }}</h3>
+                                <p class="text-sm text-gray-600">{{ membership.department.branch.name }}</p>
+                                <p class="text-xs text-gray-500">Role: {{ membership.get_role_display }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Joined: {{ membership.created_at|date:"M d, Y" }}</p>
+                                {% if membership.is_active %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No department assignments found.</p>
+                {% endif %}
+            </div>
+
+            <!-- Attendance Groups -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Attendance Groups</h2>
+                {% if attendance_memberships %}
+                    <div class="space-y-3">
+                        {% for membership in attendance_memberships %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <h3 class="font-medium text-gray-900">{{ membership.attendance_group.name }}</h3>
+                                <p class="text-sm text-gray-600">Location: {{ membership.attendance_group.latitude }}, {{ membership.attendance_group.longitude }}</p>
+                                <p class="text-xs text-gray-500">Radius: {{ membership.attendance_group.radius }}m</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Joined: {{ membership.created_at|date:"M d, Y" }}</p>
+                                {% if membership.is_active %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No attendance group assignments found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Stats -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Departments</span>
+                        <span class="text-sm font-medium text-gray-900">{{ department_memberships|length }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Attendance Groups</span>
+                        <span class="text-sm font-medium text-gray-900">{{ attendance_memberships|length }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Account Status</span>
+                        {% if employee.is_active %}
+                            <span class="text-sm font-medium text-green-600">Active</span>
+                        {% else %}
+                            <span class="text-sm font-medium text-red-600">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Attendance -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Attendance</h3>
+                {% if recent_attendance %}
+                    <div class="space-y-3">
+                        {% for summary in recent_attendance %}
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ summary.date|date:"M d" }}</p>
+                                <p class="text-xs text-gray-600">{{ summary.hours_worked }}h worked</p>
+                            </div>
+                            <div class="text-right">
+                                {% if summary.status == 'PRESENT' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Present
+                                    </span>
+                                {% elif summary.status == 'LATE' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Late
+                                    </span>
+                                {% elif summary.status == 'ABSENT' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        Absent
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'attendance:history' %}?employee={{ employee.id }}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Full History →
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-center py-4 text-sm">No recent attendance data.</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            {% if user.can_manage_hr %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'users:employee_edit' employee.id %}" 
+                       class="w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-lg font-medium transition-colors block">
+                        <i class="fas fa-edit mr-2"></i>Edit Employee
+                    </a>
+                    <a href="{% url 'users:department_management' %}" 
+                       class="w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg font-medium transition-colors block">
+                        <i class="fas fa-sitemap mr-2"></i>Manage Departments
+                    </a>
+                    {% if user.role == 'COMPANY_MANAGER' and employee != user and employee.is_active %}
+                    <form method="post" action="{% url 'users:employee_delete' employee.id %}" 
+                          onsubmit="return confirm('Are you sure you want to deactivate this employee?')">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-user-slash mr-2"></i>Deactivate Employee
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

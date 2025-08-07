@@ -107,6 +107,11 @@
                                     <i class="fas fa-user-check mr-2"></i>
                                     Attendance
                                 </a>
+                                <a href="{% url 'users:employee_list' %}" 
+                                   class="{% if 'users' in request.resolver_match.namespace and 'employee' in request.resolver_match.url_name %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    <i class="fas fa-users mr-2"></i>
+                                    Employees
+                                </a>
                                 {% endif %}
                                 
                                 {% if user.can_manage_company %}
@@ -179,6 +184,9 @@
                         {% if user.can_manage_hr %}
                         <a href="{% url 'attendance:check_in_list' %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
                             <i class="fas fa-user-check mr-2"></i>Attendance
+                        </a>
+                        <a href="{% url 'users:employee_list' %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+                            <i class="fas fa-users mr-2"></i>Employees
                         </a>
                         {% endif %}
                         {% if user.can_manage_company %}
