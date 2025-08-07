@@ -1,0 +1,149 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Settings - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
+            <p class="mt-2 text-gray-600">Manage your account settings and preferences</p>
+        </div>
+
+        <!-- Settings Sections -->
+        <div class="space-y-6">
+            <!-- Account Settings -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Account Settings</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Email Notifications</h3>
+                            <p class="text-sm text-gray-500">Receive email notifications for attendance reminders</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">SMS Notifications</h3>
+                            <p class="text-sm text-gray-500">Receive SMS notifications for important updates</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Location Services</h3>
+                            <p class="text-sm text-gray-500">Allow location access for check-in/out functionality</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Security</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Change Password</h3>
+                            <p class="text-sm text-gray-500">Update your account password</p>
+                        </div>
+                        <button type="button" 
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Change Password
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>
+                            <p class="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                        </div>
+                        <button type="button" 
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Enable 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Settings -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Privacy</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Profile Visibility</h3>
+                            <p class="text-sm text-gray-500">Control who can see your profile information</p>
+                        </div>
+                        <select class="mt-1 block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option>Everyone</option>
+                            <option selected>Company Only</option>
+                            <option>Private</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Activity Status</h3>
+                            <p class="text-sm text-gray-500">Show when you're online or last active</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-red-600">Danger Zone</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900">Delete Account</h3>
+                            <p class="text-sm text-gray-500">Permanently delete your account and all associated data</p>
+                        </div>
+                        <button type="button" 
+                                class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="mt-8 flex justify-end">
+            <button type="button" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-save mr-2"></i>
+                Save Settings
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+            <p class="mt-2 text-gray-600">Manage your personal information and preferences</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center space-x-6 mb-6">
+                    <div class="flex-shrink-0">
+                        {% if user.userprofile.avatar %}
+                            <img class="h-20 w-20 rounded-full object-cover" src="{{ user.userprofile.avatar.url }}" alt="{{ user.get_full_name }}">
+                        {% else %}
+                            <div class="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-2xl font-medium text-gray-700">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="text-sm text-gray-500">{{ user.get_role_display }}</p>
+                        {% if user.company %}
+                            <p class="text-sm text-blue-600">{{ user.company.name }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Email</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.email }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Username</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.username }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Employee ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.userprofile.employee_id|default:"Not set" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.userprofile.phone_number|default:"Not set" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date Joined</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.date_joined|date:"F d, Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Last Login</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</dd>
+                    </div>
+                </dl>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="button" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edit Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Information -->
+        {% if user.company %}
+        <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Company Information</h2>
+            </div>
+            <div class="p-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Company Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.company.name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Role</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ user.get_role_display }}</dd>
+                    </div>
+                    {% if user.company.website %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Website</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <a href="{{ user.company.website }}" target="_blank" class="text-blue-600 hover:text-blue-500">
+                                {{ user.company.website }}
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
