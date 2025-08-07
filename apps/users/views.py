@@ -363,7 +363,7 @@ def department_management(request):
     departments = Department.objects.filter(
         branch__company=company
     ).select_related('branch').prefetch_related(
-        'departmentmembership_set__user'
+        'departmentmembership_set__employee'
     )
     
     # Get employees without department assignments

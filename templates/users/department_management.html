@@ -49,7 +49,7 @@
                                                     <div class="flex-shrink-0 h-8 w-8">
                                                         <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
                                                             <span class="text-xs font-medium text-gray-700">
-                                                                {{ membership.user.first_name.0 }}{{ membership.user.last_name.0 }}
+                                                                {{ membership.employee.first_name.0 }}{{ membership.employee.last_name.0 }}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -63,10 +63,10 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center space-x-2">
-                                                    <a href="{% url 'users:employee_detail' membership.user.id %}" 
+                                                    <a href="{% url 'users:employee_detail' membership.employee.id %}" 
                                                        class="text-blue-600 hover:text-blue-800 text-sm">View</a>
                                                     <form method="post" action="{% url 'users:remove_department' %}" 
-                                                          class="inline" onsubmit="return confirm('Remove {{ membership.user.get_full_name }} from {{ department.name }}?')">
+                                                          class="inline" onsubmit="return confirm('Remove {{ membership.employee.get_full_name }} from {{ department.name }}?')">
                                                         {% csrf_token %}
                                                         <input type="hidden" name="membership_id" value="{{ membership.id }}">
                                                         <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
