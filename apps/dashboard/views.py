@@ -110,10 +110,65 @@ def dashboard(request):
 @login_required
 def profile(request):
     """
-    User profile view.
+    User profile view with update functionality.
     """
-    # This will be implemented later
-    return render(request, 'users/profile.html', {'user': request.user})
+    from django.contrib import messages
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+    
+    user = request.user
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_profile':
+            # Update basic profile information
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            
+            # Validate email uniqueness (excluding current user)
+            if email and CustomUser.objects.filter(email=email).exclude(id=user.id).exists():
+                messages.error(request, 'This email address is already in use.')
+            else:
+                # Update user fields
+                user.first_name = first_name
+                user.last_name = last_name
+                if email:
+                    user.email = email
+                user.save()
+                messages.success(request, 'Profile updated successfully!')
+        
+        elif action == 'change_password':
+            # Handle password change
+            form = PasswordChangeForm(user, request.POST)
+            if form.is_valid():
+                user = form.save()
+                update_session_auth_hash(request, user)  # Keep user logged in
+                messages.success(request, 'Password changed successfully!')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field.replace("_", " ").title()}: {error}')
+    
+    # Get user's attendance groups and recent activity
+    user_attendance_groups = AttendanceGroup.objects.filter(
+        employees=user,
+        is_active=True
+    ).select_related('company', 'branch')
+    
+    recent_checkins = CheckIn.objects.filter(
+        employee=user
+    ).select_related('attendance_group').order_by('-timestamp')[:5]
+    
+    context = {
+        'user': user,
+        'attendance_groups': user_attendance_groups,
+        'recent_checkins': recent_checkins,
+        'password_form': PasswordChangeForm(user),
+    }
+    
+    return render(request, 'users/profile.html', context)
 
 
 @login_required

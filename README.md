@@ -15,6 +15,8 @@ A multi-tenant Django-based attendance management system with location-based che
 - **User Profiles**: Extended profile information with emergency contacts
 - **User Invitations**: Email-based invitation system for new employees
 - **Role-Based Access**: Granular permissions based on user roles
+- **Employee Assignment**: Assign employees to attendance groups and departments
+- **Branch-Level Management**: HR managers restricted to their assigned branch
 
 ### 📍 Location-Based Attendance
 - **Attendance Groups**: Define check-in locations with radius validation
@@ -27,6 +29,103 @@ A multi-tenant Django-based attendance management system with location-based che
 - **Daily Summaries**: Automated daily attendance summaries
 - **Status Tracking**: On-time, late, early, and invalid location status
 - **Audit Trail**: Complete history of all attendance activities
+
+## Role-Based Access Control
+
+The SaaS Attendance Platform implements a comprehensive role-based access control system with four distinct user roles, each with specific privileges and restrictions.
+
+### 🔐 User Roles & Privileges
+
+#### **Super Admin**
+- **System-Wide Access**: Complete access to all companies, branches, and data
+- **Company Management**: Create, edit, delete any company
+- **User Management**: Manage all users across all companies
+- **Attendance Groups**: Create, edit, delete attendance groups in any company
+- **Employee Assignment**: Assign any employee to any attendance group
+- **Reports & Analytics**: Access to system-wide reports and analytics
+- **System Settings**: Configure global system settings and features
+
+#### **Company Manager**
+- **Company Scope**: Access limited to their own company and all its branches
+- **Branch Management**: Create, edit, delete branches within their company
+- **Department Management**: Manage all departments across all company branches
+- **HR Manager Assignment**: Assign HR managers to specific branches
+- **Employee Management**: Manage all employees within their company
+- **Attendance Groups**: Create, edit, delete attendance groups within their company
+- **Employee Assignment**: Assign any company employee to attendance groups
+- **Work Periods**: Manage work schedules and periods for all company groups
+- **Company Reports**: Access to company-wide attendance reports
+
+#### **HR Employee (HR Manager)**
+- **Branch Scope**: Access limited to their assigned branch only
+- **Department Management**: Manage departments within their assigned branch
+- **Employee Management**: 
+  - View and manage employees in departments within their branch
+  - Add new employees (restricted to their branch departments)
+  - Edit employee information for branch employees
+- **Attendance Groups**: 
+  - Create, edit attendance groups within their assigned branch
+  - Cannot access groups from other branches
+- **Employee Assignment**: Assign branch employees to attendance groups
+- **Work Periods**: Manage work schedules for groups in their branch
+- **Branch Reports**: Access to branch-specific attendance reports
+
+#### **Employee**
+- **Personal Access**: Limited to their own attendance and profile data
+- **Check-In/Check-Out**: Record attendance at assigned attendance groups
+- **Attendance History**: View their own attendance records and summaries
+- **Profile Management**: Update their own profile information
+- **Schedule Viewing**: View their assigned work periods and schedules
+- **No Administrative Access**: Cannot manage other users or system settings
+
+### 🛡️ Security & Data Isolation
+
+#### **Multi-Tenant Security**
+- **Company Isolation**: Each company's data is completely isolated
+- **Branch-Level Restrictions**: HR managers cannot access other branches
+- **Department Filtering**: Users only see employees in their scope
+- **Attendance Group Access**: Location-based restrictions by role
+
+#### **Permission Enforcement**
+- **View-Level Security**: All views check user permissions before displaying data
+- **Object-Level Filtering**: Database queries filtered by user's access scope
+- **Form Validation**: Server-side validation prevents unauthorized actions
+- **API Security**: All API endpoints respect role-based restrictions
+
+### 📋 Access Control Matrix
+
+| Feature | Super Admin | Company Manager | HR Manager | Employee |
+|---------|-------------|-----------------|------------|-----------|
+| **Company Management** | ✅ All | ✅ Own Company | ❌ | ❌ |
+| **Branch Management** | ✅ All | ✅ Company Branches | ❌ | ❌ |
+| **Department Management** | ✅ All | ✅ Company Depts | ✅ Branch Depts | ❌ |
+| **Employee Management** | ✅ All | ✅ Company Employees | ✅ Branch Employees | ✅ Own Profile |
+| **Attendance Groups** | ✅ All | ✅ Company Groups | ✅ Branch Groups | ❌ |
+| **Employee Assignment** | ✅ All | ✅ Company Scope | ✅ Branch Scope | ❌ |
+| **Work Periods** | ✅ All | ✅ Company Periods | ✅ Branch Periods | ❌ |
+| **Check-In/Out** | ✅ All | ✅ All | ✅ All | ✅ Own Only |
+| **Reports** | ✅ System-Wide | ✅ Company Reports | ✅ Branch Reports | ✅ Personal Only |
+| **User Invitations** | ✅ All | ✅ Company Users | ✅ Branch Users | ❌ |
+
+### 🔧 Implementation Details
+
+#### **Role Assignment**
+- **Super Admin**: Assigned during system setup or by existing Super Admin
+- **Company Manager**: Assigned when creating a company or by Super Admin
+- **HR Manager**: Assigned by Company Manager with specific branch assignment
+- **Employee**: Default role for new users, assigned to departments by managers
+
+#### **Branch Assignment for HR Managers**
+- HR Managers must be assigned to a specific branch
+- This assignment determines their access scope
+- Cannot be changed without Company Manager or Super Admin privileges
+- All their actions are restricted to their assigned branch
+
+#### **Data Filtering**
+- **get_accessible_employees()**: Helper function filters employees by user's role
+- **Branch-level queries**: HR managers see only their branch data
+- **Company-level queries**: Company managers see all company data
+- **System-level queries**: Super admins see all data
 
 ## Project Structure
 

@@ -3,6 +3,11 @@
 
 {% block title %}Edit {{ group.name }} - Attendance Group - {{ block.super }}{% endblock %}
 
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -168,6 +173,20 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Interactive Map -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <div class="mb-3">
+                                    <h3 class="text-sm font-medium text-gray-800">
+                                        <i class="fas fa-map mr-2 text-gray-600"></i>
+                                        Location Map
+                                    </h3>
+                                </div>
+                                <div id="locationMap" class="h-64 w-full rounded-md border border-gray-300"></div>
+                                <p class="mt-2 text-xs text-gray-500">
+                                    Click on the map to update the attendance location, or use the coordinates above.
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Form Actions -->
@@ -267,6 +286,9 @@
         </div>
     </div>
 </div>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
 // Form validation and location helper
@@ -380,6 +402,92 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isValid) {
             e.preventDefault();
             alert('Please fill in all required fields correctly.');
+        }
+    });
+
+    // Map functionality
+    let map = null;
+    let marker = null;
+    let circle = null;
+    const mapContainer = document.getElementById('locationMap');
+
+    // Initialize map immediately with existing group location
+    setTimeout(() => {
+        if (!map) {
+            // Get existing coordinates from the form
+            const existingLat = parseFloat(latitudeField.value) || {{ group.latitude }};
+            const existingLng = parseFloat(longitudeField.value) || {{ group.longitude }};
+            
+            map = L.map('locationMap').setView([existingLat, existingLng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click handler for map
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                // Update form fields
+                latitudeField.value = lat.toFixed(6);
+                longitudeField.value = lng.toFixed(6);
+                
+                // Update map marker and circle
+                updateMapMarker(lat, lng);
+            });
+            
+            // Initialize with existing location
+            updateMapMarker(existingLat, existingLng);
+        }
+    }, 500); // Small delay to ensure DOM is ready
+
+    // Function to update map marker and circle
+    function updateMapMarker(lat, lng) {
+        if (!map) return;
+        
+        // Remove existing marker and circle
+        if (marker) map.removeLayer(marker);
+        if (circle) map.removeLayer(circle);
+        
+        // Add new marker
+        marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('{{ group.name }} Location');
+        
+        // Add radius circle
+        const radius = parseInt(radiusField.value) || {{ group.radius }};
+        circle = L.circle([lat, lng], {
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.2,
+            radius: radius
+        }).addTo(map);
+    }
+
+    // Update map when coordinates change manually
+    latitudeField.addEventListener('input', function() {
+        const lat = parseFloat(latitudeField.value);
+        const lng = parseFloat(longitudeField.value);
+        if (!isNaN(lat) && !isNaN(lng) && map) {
+            map.setView([lat, lng], 15);
+            updateMapMarker(lat, lng);
+        }
+    });
+
+    longitudeField.addEventListener('input', function() {
+        const lat = parseFloat(latitudeField.value);
+        const lng = parseFloat(longitudeField.value);
+        if (!isNaN(lat) && !isNaN(lng) && map) {
+            map.setView([lat, lng], 15);
+            updateMapMarker(lat, lng);
+        }
+    });
+
+    // Update circle when radius changes
+    radiusField.addEventListener('input', function() {
+        const lat = parseFloat(latitudeField.value);
+        const lng = parseFloat(longitudeField.value);
+        if (!isNaN(lat) && !isNaN(lng) && map) {
+            updateMapMarker(lat, lng);
         }
     });
 });

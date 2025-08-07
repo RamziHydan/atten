@@ -171,16 +171,13 @@
 
                             <!-- Interactive Map -->
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-3">
+                                <div class="mb-3">
                                     <h3 class="text-sm font-medium text-gray-800">
                                         <i class="fas fa-map mr-2 text-gray-600"></i>
                                         Location Map
                                     </h3>
-                                    <button type="button" id="toggleMap" class="text-xs text-blue-600 hover:text-blue-800">
-                                        Show Map
-                                    </button>
                                 </div>
-                                <div id="locationMap" class="hidden h-64 w-full rounded-md border border-gray-300"></div>
+                                <div id="locationMap" class="h-64 w-full rounded-md border border-gray-300"></div>
                                 <p class="mt-2 text-xs text-gray-500">
                                     Click on the map to set the attendance location, or use the coordinates above.
                                 </p>
@@ -412,38 +409,31 @@ document.addEventListener('DOMContentLoaded', function() {
     let map = null;
     let marker = null;
     let circle = null;
-    const toggleMapBtn = document.getElementById('toggleMap');
     const mapContainer = document.getElementById('locationMap');
 
-    toggleMapBtn.addEventListener('click', function() {
-        if (mapContainer.classList.contains('hidden')) {
-            // Show map
-            mapContainer.classList.remove('hidden');
-            toggleMapBtn.textContent = 'Hide Map';
-            
-            // Initialize map if not already done
-            if (!map) {
-                map = L.map('locationMap').setView([40.7128, -74.0060], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
+    // Initialize map immediately
+    setTimeout(() => {
+        if (!map) {
+            map = L.map('locationMap').setView([40.7128, -74.0060], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
-                // Add click handler for map
-                map.on('click', function(e) {
-                    const lat = e.latlng.lat;
-                    const lng = e.latlng.lng;
-                    
-                    // Update form fields
-                    latitudeField.value = lat.toFixed(6);
-                    longitudeField.value = lng.toFixed(6);
-                    
-                    // Update map marker and circle
-                    updateMapMarker(lat, lng);
-                    
-                    // Update preview
-                    updatePreview();
-                });
-            }
+            // Add click handler for map
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                // Update form fields
+                latitudeField.value = lat.toFixed(6);
+                longitudeField.value = lng.toFixed(6);
+                
+                // Update map marker and circle
+                updateMapMarker(lat, lng);
+                
+                // Update preview
+                updatePreview();
+            });
             
             // Update map with current coordinates if available
             const lat = parseFloat(latitudeField.value);
@@ -452,15 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 map.setView([lat, lng], 15);
                 updateMapMarker(lat, lng);
             }
-            
-            // Trigger map resize
-            setTimeout(() => map.invalidateSize(), 100);
-        } else {
-            // Hide map
-            mapContainer.classList.add('hidden');
-            toggleMapBtn.textContent = 'Show Map';
         }
-    });
+    }, 500); // Small delay to ensure DOM is ready
 
     // Function to update map marker and circle
     function updateMapMarker(lat, lng) {
