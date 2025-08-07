@@ -359,7 +359,7 @@ document.getElementById('checkin-form').addEventListener('submit', function(e) {
         if (data.success) {
             // Show success message and redirect
             alert('Check-in successful!');
-            window.location.href = data.redirect_url || '{% url "dashboard" %}';
+            window.location.href = data.redirect_url || '{% url "dashboard:dashboard" %}';
         } else {
             // Show error message
             alert(data.error || 'Check-in failed. Please try again.');

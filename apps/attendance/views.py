@@ -239,7 +239,7 @@ def check_in_list(request):
     """
     if not request.user.can_manage_hr:
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('dashboard')
+        return redirect('dashboard:dashboard')
     
     # Get all check-ins for the user's company
     checkins = CheckIn.objects.filter(
@@ -262,7 +262,7 @@ def reports(request):
     """
     if not request.user.can_manage_hr:
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('dashboard')
+        return redirect('dashboard:dashboard')
     
     # This will be implemented with more detailed reporting
     context = {
