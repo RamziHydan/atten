@@ -1,0 +1,50 @@
+# --- Environments ---
+# Ignore the virtual environment folder
+venv/
+env/
+.venv/
+
+# Ignore environment variable files (contains secrets!)
+.env
+.env.*
+!.env.example
+
+# --- Django & Python ---
+# Ignore the local SQLite database
+db.sqlite3
+db.sqlite3-journal
+
+# Ignore collected static files and user-uploaded media
+staticfiles/
+mediafiles/
+
+# Ignore Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore log files
+*.log
+logs/
+
+# --- IDE & Editor Config ---
+# VSCode
+.vscode/
+
+# PyCharm / IntelliJ
+.idea/
+
+# --- Testing & Coverage ---
+# Ignore test reports and coverage data
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+
+# --- System Files ---
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db

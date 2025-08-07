@@ -1,0 +1,14 @@
+Django>=5.2.5
+Pillow>=11.3.0
+# Future dependencies for production:
+# psycopg2-binary>=2.9.0  # For PostgreSQL
+# gunicorn>=21.0.0  # For production deployment
+# django-environ>=0.11.0  # For environment variables
+# celery>=5.3.0  # For background tasks
+# redis>=5.0.0  # For caching and task queues
+# djangorestframework>=3.14.0  # For API development
+# django-leaflet>=0.29.0  # For map integration when GeoDjango is enabled
+
+# GeoDjango dependencies (when GDAL is available):
+# GDAL>=3.4.0
+# django-contrib-gis
