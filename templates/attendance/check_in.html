@@ -1,0 +1,378 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Check In - AttendanceHub{% endblock %}
+
+{% block page_title %}Check In{% endblock %}
+
+{% block page_description %}
+<p class="mt-1 text-sm text-gray-500">
+    Record your arrival time and location for attendance tracking.
+</p>
+{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS for maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Check-in Form -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <form id="checkin-form" method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Attendance Group Selection -->
+                <div>
+                    <label for="attendance_group" class="block text-sm font-medium text-gray-700">
+                        Attendance Group
+                    </label>
+                    <select id="attendance_group" name="attendance_group" required
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                        <option value="">Select your attendance group</option>
+                        {% for group in attendance_groups %}
+                        <option value="{{ group.id }}" 
+                                data-lat="{{ group.latitude }}" 
+                                data-lng="{{ group.longitude }}" 
+                                data-radius="{{ group.radius }}">
+                            {{ group.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Location Status -->
+                <div id="location-status" class="hidden">
+                    <div class="rounded-md bg-blue-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-map-marker-alt text-blue-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">
+                                    Getting your location...
+                                </h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <p>Please allow location access to continue with check-in.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Success -->
+                <div id="location-success" class="hidden">
+                    <div class="rounded-md bg-success-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-success-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-success-800">
+                                    Location verified
+                                </h3>
+                                <div class="mt-2 text-sm text-success-700">
+                                    <p>You are <span id="distance-text"></span> from the check-in location.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Error -->
+                <div id="location-error" class="hidden">
+                    <div class="rounded-md bg-danger-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-danger-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-danger-800">
+                                    Location issue
+                                </h3>
+                                <div class="mt-2 text-sm text-danger-700">
+                                    <p id="location-error-text">Unable to get your location.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div id="map-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Check-in Location
+                    </label>
+                    <div id="map" class="h-64 w-full rounded-lg border border-gray-300"></div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        The blue circle shows the valid check-in area. Your location is marked with a red pin.
+                    </p>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">
+                        Notes (Optional)
+                    </label>
+                    <textarea id="notes" name="notes" rows="3"
+                              class="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                              placeholder="Any additional notes for this check-in..."></textarea>
+                </div>
+
+                <!-- Hidden fields for location -->
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="button" onclick="window.history.back()" 
+                            class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 mr-3">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-btn" disabled
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span id="submit-text">Check In</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current Time Display -->
+    <div class="mt-6 bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6 text-center">
+            <div class="text-3xl font-bold text-gray-900" id="current-time"></div>
+            <div class="text-sm text-gray-500" id="current-date"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS for maps -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map;
+let userMarker;
+let groupCircle;
+let userLat, userLng;
+let selectedGroup;
+
+// Update current time
+function updateTime() {
+    const now = new Date();
+    document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+// Initialize time display
+updateTime();
+setInterval(updateTime, 1000);
+
+// Handle attendance group selection
+document.getElementById('attendance_group').addEventListener('change', function() {
+    const select = this;
+    selectedGroup = select.options[select.selectedIndex];
+    
+    if (selectedGroup.value) {
+        getLocation();
+    } else {
+        hideLocationElements();
+    }
+});
+
+function hideLocationElements() {
+    document.getElementById('location-status').classList.add('hidden');
+    document.getElementById('location-success').classList.add('hidden');
+    document.getElementById('location-error').classList.add('hidden');
+    document.getElementById('map-container').classList.add('hidden');
+    document.getElementById('submit-btn').disabled = true;
+}
+
+function getLocation() {
+    document.getElementById('location-status').classList.remove('hidden');
+    document.getElementById('location-success').classList.add('hidden');
+    document.getElementById('location-error').classList.add('hidden');
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            showPosition,
+            showError,
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    } else {
+        showError({ code: 0, message: "Geolocation is not supported by this browser." });
+    }
+}
+
+function showPosition(position) {
+    userLat = position.coords.latitude;
+    userLng = position.coords.longitude;
+    
+    // Set hidden form fields
+    document.getElementById('latitude').value = userLat;
+    document.getElementById('longitude').value = userLng;
+    
+    // Calculate distance to selected group
+    const groupLat = parseFloat(selectedGroup.dataset.lat);
+    const groupLng = parseFloat(selectedGroup.dataset.lng);
+    const radius = parseInt(selectedGroup.dataset.radius);
+    
+    const distance = calculateDistance(userLat, userLng, groupLat, groupLng);
+    const isWithinRadius = distance <= radius;
+    
+    // Hide loading status
+    document.getElementById('location-status').classList.add('hidden');
+    
+    // Show success or error based on distance
+    if (isWithinRadius) {
+        document.getElementById('location-success').classList.remove('hidden');
+        document.getElementById('distance-text').textContent = `${Math.round(distance)}m`;
+        document.getElementById('submit-btn').disabled = false;
+    } else {
+        document.getElementById('location-error').classList.remove('hidden');
+        document.getElementById('location-error-text').textContent = 
+            `You are ${Math.round(distance)}m away from the check-in location. You need to be within ${radius}m to check in.`;
+        document.getElementById('submit-btn').disabled = true;
+    }
+    
+    // Initialize map
+    initMap(groupLat, groupLng, radius);
+}
+
+function showError(error) {
+    document.getElementById('location-status').classList.add('hidden');
+    document.getElementById('location-error').classList.remove('hidden');
+    
+    let errorText = "Unable to get your location. ";
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorText += "Please allow location access and try again.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorText += "Location information is unavailable.";
+            break;
+        case error.TIMEOUT:
+            errorText += "Location request timed out.";
+            break;
+        default:
+            errorText += "An unknown error occurred.";
+            break;
+    }
+    
+    document.getElementById('location-error-text').textContent = errorText;
+    document.getElementById('submit-btn').disabled = true;
+}
+
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function initMap(groupLat, groupLng, radius) {
+    document.getElementById('map-container').classList.remove('hidden');
+    
+    // Initialize map if not already done
+    if (!map) {
+        map = L.map('map').setView([groupLat, groupLng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+    } else {
+        map.setView([groupLat, groupLng], 17);
+    }
+    
+    // Clear existing markers and circles
+    if (userMarker) map.removeLayer(userMarker);
+    if (groupCircle) map.removeLayer(groupCircle);
+    
+    // Add group location circle
+    groupCircle = L.circle([groupLat, groupLng], {
+        color: '#3b82f6',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.2,
+        radius: radius
+    }).addTo(map);
+    
+    // Add user location marker
+    if (userLat && userLng) {
+        userMarker = L.marker([userLat, userLng], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map);
+        
+        userMarker.bindPopup('Your Location').openPopup();
+    }
+    
+    // Fit map to show both locations
+    if (userLat && userLng) {
+        const group = new L.featureGroup([groupCircle, userMarker]);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+// Handle form submission
+document.getElementById('checkin-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    
+    // Disable button and show loading
+    submitBtn.disabled = true;
+    submitText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+    
+    // Submit form
+    fetch(this.action || window.location.href, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message and redirect
+            alert('Check-in successful!');
+            window.location.href = data.redirect_url || '{% url "dashboard" %}';
+        } else {
+            // Show error message
+            alert(data.error || 'Check-in failed. Please try again.');
+            submitBtn.disabled = false;
+            submitText.innerHTML = '<i class="fas fa-clock mr-2"></i>Check In';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        submitBtn.disabled = false;
+        submitText.innerHTML = '<i class="fas fa-clock mr-2"></i>Check In';
+    });
+});
+</script>
+{% endblock %}
