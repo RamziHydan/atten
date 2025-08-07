@@ -10,7 +10,7 @@
             <h1 class="text-3xl font-bold text-gray-900">Employee Management</h1>
             <p class="text-gray-600 mt-2">Manage your company's employees and their information</p>
         </div>
-        {% if user.role == 'COMPANY_MANAGER' or user.role == 'SUPER_ADMIN' %}
+        {% if user.can_manage_hr %}
         <a href="{% url 'users:employee_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
             <i class="fas fa-plus mr-2"></i>Add Employee
         </a>

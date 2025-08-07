@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Add Department to {{ branch.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Add Department</h1>
+            <p class="text-gray-600 mt-2">Create a new department in {{ branch.name }}</p>
+        </div>
+        <a href="{% url 'companies:branch_detail' branch.id %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Branch
+        </a>
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow">
+            <form method="post" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <!-- Branch Context -->
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-building text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Branch: {{ branch.name }}</h3>
+                            <p class="text-sm text-blue-600">{{ branch.city }}{% if branch.state %}, {{ branch.state }}{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department Information -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Department Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Department Name *</label>
+                            <input type="text" id="name" name="name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., Human Resources, Engineering, Sales">
+                            <p class="text-xs text-gray-500 mt-1">Choose a descriptive name for this department</p>
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="description" name="description" rows="4"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="Brief description of the department's role and responsibilities..."></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Optional: Describe what this department does</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Preview</h3>
+                    <div class="bg-white rounded-lg p-4 border border-gray-200">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-sitemap text-green-600"></i>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h4 class="font-medium text-gray-900" id="preview-name">Department Name</h4>
+                                <p class="text-sm text-gray-600">{{ branch.name }} • {{ branch.city }}</p>
+                                <p class="text-sm text-gray-600 mt-1" id="preview-description">Department description will appear here</p>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                        <i class="fas fa-users mr-1"></i>
+                                        0 employees
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Departments -->
+                {% if branch.departments.all %}
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Existing Departments in {{ branch.name }}</h3>
+                    <div class="space-y-2">
+                        {% for department in branch.departments.all %}
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-sitemap text-gray-400"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <p class="text-sm font-medium text-gray-900">{{ department.name }}</p>
+                                {% if department.description %}
+                                    <p class="text-xs text-gray-600">{{ department.description|truncatewords:10 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-gray-500">
+                                    {{ department.departmentmembership_set.count }} employee{{ department.departmentmembership_set.count|pluralize }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'companies:branch_detail' branch.id %}" 
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Live preview functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameField = document.getElementById('name');
+    const descriptionField = document.getElementById('description');
+    const previewName = document.getElementById('preview-name');
+    const previewDescription = document.getElementById('preview-description');
+    
+    // Update preview function
+    function updatePreview() {
+        previewName.textContent = nameField.value || 'Department Name';
+        previewDescription.textContent = descriptionField.value || 'Department description will appear here';
+    }
+    
+    // Add event listeners for live preview
+    nameField.addEventListener('input', updatePreview);
+    descriptionField.addEventListener('input', updatePreview);
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!nameField.value.trim()) {
+            nameField.setCustomValidity('Department name is required');
+            e.preventDefault();
+            alert('Please enter a department name.');
+        } else {
+            nameField.setCustomValidity('');
+        }
+    });
+    
+    // Initialize preview
+    updatePreview();
+});
+</script>
+{% endblock %}

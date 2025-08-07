@@ -1,0 +1,222 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Branch Management{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Branch Management</h1>
+            <p class="text-gray-600 mt-2">Manage your company's branches and locations</p>
+        </div>
+        <a href="{% url 'companies:branch_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <i class="fas fa-plus mr-2"></i>Add Branch
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-building text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Branches</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_branches }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-sitemap text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Departments</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_departments }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-purple-100 rounded-lg">
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Employees</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_employees }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-map-marker-alt text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Locations</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                        {% regroup branches by city as city_list %}
+                        {{ city_list|length }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="p-6">
+            <form method="get" class="flex gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Branches</label>
+                    <input type="text" name="search" value="{{ search_query }}" 
+                           placeholder="Search by name, address, or city..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <a href="{% url 'companies:branch_list' %}" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-md font-medium transition-colors">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Branch Grid -->
+    {% if branches %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for branch in branches %}
+            <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <!-- Branch Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ branch.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ branch.city }}{% if branch.state %}, {{ branch.state }}{% endif %}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'companies:branch_detail' branch.id %}" 
+                               class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                View
+                            </a>
+                            <a href="{% url 'companies:branch_edit' branch.id %}" 
+                               class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                Edit
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Branch Details -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                            <span class="truncate">{{ branch.address }}</span>
+                        </div>
+                        {% if branch.phone %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-phone mr-2 text-gray-400"></i>
+                            <span>{{ branch.phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if branch.email %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+                            <span class="truncate">{{ branch.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Branch Stats -->
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ branch.department_count }}</div>
+                            <div class="text-xs text-gray-600">Department{{ branch.department_count|pluralize }}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">{{ branch.total_employees }}</div>
+                            <div class="text-xs text-gray-600">Employee{{ branch.total_employees|pluralize }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <a href="{% url 'companies:department_create' branch.id %}" 
+                               class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                <i class="fas fa-plus mr-1"></i>Add Department
+                            </a>
+                            <form method="post" action="{% url 'companies:branch_delete' branch.id %}" 
+                                  class="inline" onsubmit="return confirm('Are you sure you want to delete {{ branch.name }}? This will also delete all departments in this branch.')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                
+                <span class="px-3 py-2 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-300 rounded-md">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-lg shadow p-12 text-center">
+            <i class="fas fa-building text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Branches Found</h3>
+            {% if search_query %}
+                <p class="text-gray-600 mb-4">No branches match your search criteria.</p>
+                <a href="{% url 'companies:branch_list' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Clear search and view all branches
+                </a>
+            {% else %}
+                <p class="text-gray-600 mb-4">Get started by creating your first branch location.</p>
+                <a href="{% url 'companies:branch_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create First Branch
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-focus search input if there's a query
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput && searchInput.value) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    }
+});
+</script>
+{% endblock %}

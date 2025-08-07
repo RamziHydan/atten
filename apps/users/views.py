@@ -44,7 +44,7 @@ def settings(request):
 @login_required
 @user_passes_test(hr_required)
 def employee_list(request):
-    """List all employees in the company with search and filter capabilities"""
+    """List all employees with search and filter capabilities"""
     user = request.user
     company = user.company
     
@@ -58,10 +58,8 @@ def employee_list(request):
     role_filter = request.GET.get('role', '')
     status_filter = request.GET.get('status', 'active')
     
-    # Base queryset - employees in the same company
-    employees = User.objects.filter(
-        company=company
-    ).select_related('company', 'profile').prefetch_related(
+    # Base queryset - employees accessible to this user based on role and branch
+    employees = user.get_accessible_employees().select_related('company').prefetch_related(
         'departmentmembership_set__department__branch'
     )
     
@@ -126,13 +124,13 @@ def employee_detail(request, employee_id):
     user = request.user
     company = user.company
     
+    # Get employee from accessible employees based on user's role and branch
     employee = get_object_or_404(
-        User.objects.select_related('company', 'profile').prefetch_related(
+        user.get_accessible_employees().select_related('company', 'profile').prefetch_related(
             'departmentmembership_set__department__branch',
             'attendancegroupmembership_set__attendance_group'
         ),
-        id=employee_id,
-        company=company
+        id=employee_id
     )
     
     # Get employee's department memberships
@@ -163,7 +161,7 @@ def employee_detail(request, employee_id):
     return render(request, 'users/employee_detail.html', context)
 
 @login_required
-@user_passes_test(company_manager_required)
+@user_passes_test(hr_required)
 def employee_create(request):
     """Create a new employee"""
     user = request.user
@@ -172,6 +170,11 @@ def employee_create(request):
     if not company:
         messages.error(request, 'You must be associated with a company to create employees.')
         return redirect('dashboard:dashboard')
+    
+    # Check if HR manager has a branch assignment
+    if user.role == UserRole.HR_EMPLOYEE and not user.managed_branch:
+        messages.error(request, 'HR managers must be assigned to a branch to create employees.')
+        return redirect('users:employee_list')
     
     if request.method == 'POST':
         try:
@@ -228,11 +231,19 @@ def employee_create(request):
             
             # Assign to department if specified
             if department_id:
-                department = get_object_or_404(
-                    Department,
-                    id=department_id,
-                    branch__company=company
-                )
+                # For HR managers, ensure department is within their branch
+                if user.role == UserRole.HR_EMPLOYEE:
+                    department = get_object_or_404(
+                        Department,
+                        id=department_id,
+                        branch=user.managed_branch
+                    )
+                else:
+                    department = get_object_or_404(
+                        Department,
+                        id=department_id,
+                        branch__company=company
+                    )
                 DepartmentMembership.objects.create(
                     employee=employee,
                     department=department,
@@ -246,9 +257,17 @@ def employee_create(request):
             messages.error(request, f'Error creating employee: {str(e)}')
     
     # GET request - show form
-    departments = Department.objects.filter(
-        branch__company=company
-    ).select_related('branch')
+    # Filter departments based on user role
+    if user.role == UserRole.HR_EMPLOYEE and user.managed_branch:
+        # HR managers can only see departments in their assigned branch
+        departments = Department.objects.filter(
+            branch=user.managed_branch
+        ).select_related('branch')
+    else:
+        # Company managers and super admins can see all company departments
+        departments = Department.objects.filter(
+            branch__company=company
+        ).select_related('branch')
     
     context = {
         'departments': departments,
@@ -264,10 +283,10 @@ def employee_edit(request, employee_id):
     user = request.user
     company = user.company
     
+    # Get employee from accessible employees based on user's role and branch
     employee = get_object_or_404(
-        User.objects.select_related('profile'),
-        id=employee_id,
-        company=company
+        user.get_accessible_employees().select_related('profile'),
+        id=employee_id
     )
     
     if request.method == 'POST':

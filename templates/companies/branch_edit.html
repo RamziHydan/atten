@@ -1,0 +1,480 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Edit {{ branch.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Edit {{ branch.name }}</h1>
+            <p class="text-gray-600 mt-2">Update branch information</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'companies:branch_detail' branch.id %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Details
+            </a>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow">
+            <form method="post" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Branch Name *</label>
+                            <input type="text" id="name" name="name" required
+                                   value="{{ branch.name }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., Downtown Office, Main Branch">
+                        </div>
+                        <div>
+                            <label for="code" class="block text-sm font-medium text-gray-700 mb-2">Branch Code</label>
+                            <input type="text" id="code" name="code"
+                                   value="{{ branch.code }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., DOWN, MAIN (auto-generated if empty)">
+                            <p class="text-xs text-gray-500 mt-1">Leave empty to auto-generate from branch name</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Address *</label>
+                        <textarea id="address" name="address" rows="3" required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Enter full street address">{{ branch.address }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Contact Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="tel" id="phone" name="phone"
+                                   value="{{ branch.phone_number }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., +1 (555) 123-4567">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" id="email" name="email"
+                                   value="{{ branch.email }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., branch@company.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Branch Management -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Branch Management</h2>
+                    <p class="text-sm text-gray-600 mb-4">Assign an HR manager to oversee this branch's operations and employee management.</p>
+                    
+                    <div>
+                        <label for="hr_manager" class="block text-sm font-medium text-gray-700 mb-2">HR Manager</label>
+                        <select id="hr_manager" name="hr_manager"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select an HR Manager (Optional)</option>
+                            {% for manager in hr_managers %}
+                                <option value="{{ manager.id }}" {% if current_hr_manager and manager.id == current_hr_manager.id %}selected{% endif %}>
+                                    {{ manager.get_full_name }} ({{ manager.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {% if current_hr_manager %}
+                                Currently assigned to: <strong>{{ current_hr_manager.get_full_name }}</strong>
+                            {% else %}
+                                No HR manager currently assigned to this branch.
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {% if hr_managers %}
+                                Available HR employees and current assignment are shown.
+                            {% else %}
+                                No available HR managers found. Create HR employee accounts first.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Geographic Coordinates -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Geographic Coordinates</h2>
+                    <p class="text-sm text-gray-600 mb-4">Set the exact location for attendance tracking and mapping features.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label for="latitude" class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                            <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90"
+                                   value="{{ branch.latitude }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., 40.712776">
+                            <p class="text-xs text-gray-500 mt-1">Range: -90 to 90 degrees</p>
+                        </div>
+                        <div>
+                            <label for="longitude" class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                            <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180"
+                                   value="{{ branch.longitude }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., -74.005974">
+                            <p class="text-xs text-gray-500 mt-1">Range: -180 to 180 degrees</p>
+                        </div>
+                        <div>
+                            <label for="radius" class="block text-sm font-medium text-gray-700 mb-2">Check-in Radius (meters)</label>
+                            <input type="number" id="radius" name="radius" min="10" max="10000"
+                                   value="{{ branch.radius|default:branch.company.default_radius }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="e.g., 100">
+                            <p class="text-xs text-gray-500 mt-1">Range: 10 to 10,000 meters</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Integration -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">Interactive Map</h3>
+                            <button type="button" id="getCurrentLocation" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                                <i class="fas fa-crosshairs mr-1"></i>Use Current Location
+                            </button>
+                        </div>
+                        <div id="map" class="h-64 w-full rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+                            <div class="text-gray-500 text-center">
+                                <i class="fas fa-map-marker-alt text-2xl mb-2"></i>
+                                <p>Click on the map to set coordinates</p>
+                                <p class="text-sm">Or enter coordinates manually above</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Click anywhere on the map to automatically set latitude and longitude coordinates.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Branch Statistics -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Branch Statistics</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ branch.departments.count }}</div>
+                            <div class="text-sm text-gray-600">Department{{ branch.departments.count|pluralize }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-green-600">
+                                {{ branch.departments.all|length }}
+                            </div>
+                            <div class="text-sm text-gray-600">Active Department{{ branch.departments.all|length|pluralize }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-purple-600">
+                                {% with total_employees=0 %}
+                                    {% for dept in branch.departments.all %}
+                                        {% with total_employees=total_employees|add:dept.departmentmembership_set.count %}{% endwith %}
+                                    {% endfor %}
+                                    {{ total_employees }}
+                                {% endwith %}
+                            </div>
+                            <div class="text-sm text-gray-600">Total Employees</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timestamps -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Branch History</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-700">Created:</span>
+                            <span class="text-gray-900">{{ branch.created_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-700">Last Updated:</span>
+                            <span class="text-gray-900">{{ branch.updated_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'companies:branch_detail' branch.id %}" 
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Global variables
+let map;
+let marker;
+let radiusCircle;
+
+// Map and form functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    // Form fields
+    const nameField = document.getElementById('name');
+    const addressField = document.getElementById('address');
+    const phoneField = document.getElementById('phone');
+    const emailField = document.getElementById('email');
+    const latitudeField = document.getElementById('latitude');
+    const longitudeField = document.getElementById('longitude');
+    const radiusField = document.getElementById('radius');
+    
+    // Initialize map
+    initializeMap();
+    
+    // Load existing coordinates if available
+    if (latitudeField.value && longitudeField.value) {
+        const lat = parseFloat(latitudeField.value);
+        const lng = parseFloat(longitudeField.value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            setCoordinates(lat, lng);
+        }
+    }
+    
+    // Coordinate field listeners
+    latitudeField.addEventListener('input', function() {
+        updateMapFromCoordinates();
+    });
+    
+    longitudeField.addEventListener('input', function() {
+        updateMapFromCoordinates();
+    });
+    
+    radiusField.addEventListener('input', function() {
+        updateMapFromCoordinates();
+    });
+    
+    // Current location button
+    document.getElementById('getCurrentLocation').addEventListener('click', function() {
+        getCurrentLocation();
+    });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'address'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.setCustomValidity('This field is required');
+                isValid = false;
+            } else {
+                field.setCustomValidity('');
+            }
+        });
+        
+        // Email validation
+        if (emailField.value && !isValidEmail(emailField.value)) {
+            emailField.setCustomValidity('Please enter a valid email address');
+            isValid = false;
+        } else {
+            emailField.setCustomValidity('');
+        }
+        
+        // Coordinate validation
+        if (latitudeField.value && longitudeField.value) {
+            const lat = parseFloat(latitudeField.value);
+            const lng = parseFloat(longitudeField.value);
+            
+            if (isNaN(lat) || lat < -90 || lat > 90) {
+                latitudeField.setCustomValidity('Latitude must be between -90 and 90 degrees');
+                isValid = false;
+            } else {
+                latitudeField.setCustomValidity('');
+            }
+            
+            if (isNaN(lng) || lng < -180 || lng > 180) {
+                longitudeField.setCustomValidity('Longitude must be between -180 and 180 degrees');
+                isValid = false;
+            } else {
+                longitudeField.setCustomValidity('');
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+    
+    // Email validation helper
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+});
+
+// Map initialization
+function initializeMap() {
+    // Default to New York City coordinates
+    const defaultLat = 40.7128;
+    const defaultLng = -74.0060;
+    
+    // Initialize map
+    map = L.map('map').setView([defaultLat, defaultLng], 13);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Add click event to map
+    map.on('click', function(e) {
+        setCoordinates(e.latlng.lat, e.latlng.lng);
+    });
+}
+
+// Set coordinates from map click or manual input
+function setCoordinates(lat, lng) {
+    // Update form fields
+    document.getElementById('latitude').value = lat.toFixed(6);
+    document.getElementById('longitude').value = lng.toFixed(6);
+    
+    // Update map marker
+    if (marker) {
+        map.removeLayer(marker);
+    }
+    
+    // Remove existing radius circle
+    if (radiusCircle) {
+        map.removeLayer(radiusCircle);
+    }
+    
+    // Get current radius value
+    const radiusValue = parseInt(document.getElementById('radius').value) || 100;
+    
+    // Add marker
+    marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup(`<b>Branch Location</b><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}<br>Radius: ${radiusValue}m`).openPopup();
+    
+    // Add radius circle
+    radiusCircle = L.circle([lat, lng], {
+        color: '#3b82f6',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1,
+        radius: radiusValue
+    }).addTo(map);
+    
+    // Center map on marker and adjust zoom to show the circle
+    map.setView([lat, lng], 15);
+    
+    // Fit map to show the entire circle
+    const bounds = radiusCircle.getBounds();
+    map.fitBounds(bounds, { padding: [20, 20] });
+}
+
+// Update map when coordinates are manually entered
+function updateMapFromCoordinates() {
+    const latField = document.getElementById('latitude');
+    const lngField = document.getElementById('longitude');
+    
+    if (latField.value && lngField.value) {
+        const lat = parseFloat(latField.value);
+        const lng = parseFloat(lngField.value);
+        
+        if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            setCoordinates(lat, lng);
+        }
+    }
+}
+
+// Get current location using geolocation API
+function getCurrentLocation() {
+    const button = document.getElementById('getCurrentLocation');
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Getting Location...';
+    button.disabled = true;
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                setCoordinates(lat, lng);
+                
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                // Show success message
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                toast.innerHTML = '<i class="fas fa-check mr-2"></i>Location detected successfully!';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 3000);
+            },
+            function(error) {
+                console.error('Geolocation error:', error);
+                
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                // Show error message
+                let errorMessage = 'Unable to get your location.';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Location access denied. Please enable location permissions.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Location request timed out.';
+                        break;
+                }
+                
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                toast.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>' + errorMessage;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 5000);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    } else {
+        // Reset button
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        alert('Geolocation is not supported by this browser.');
+    }
+}
+</script>
+{% endblock %}

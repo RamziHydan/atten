@@ -63,6 +63,10 @@ class Company(models.Model):
         default=50,
         help_text="Maximum number of employees allowed"
     )
+    default_radius = models.PositiveIntegerField(
+        default=100,
+        help_text="Default radius in meters for attendance check-in/out geofence (applies to branches without specific radius)"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -157,6 +161,10 @@ class Branch(models.Model):
         blank=True,
         help_text="Branch longitude coordinate"
     )
+    radius = models.PositiveIntegerField(
+        default=100,
+        help_text="Radius in meters for attendance check-in/out geofence"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -185,6 +193,16 @@ class Branch(models.Model):
     def has_coordinates(self):
         """Check if branch has geographic coordinates set"""
         return self.latitude is not None and self.longitude is not None
+    
+    @property
+    def effective_radius(self):
+        """Get the effective radius for this branch (branch radius or company default)"""
+        return self.radius if self.radius else self.company.default_radius
+    
+    @property
+    def can_track_attendance(self):
+        """Check if branch can track attendance (has coordinates and radius)"""
+        return self.has_coordinates and (self.radius or self.company.default_radius)
 
 
 class Department(models.Model):

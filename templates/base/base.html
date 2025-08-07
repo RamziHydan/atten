@@ -116,9 +116,14 @@
                                 
                                 {% if user.can_manage_company %}
                                 <a href="{% url 'companies:company_detail' user.company.id %}" 
-                                   class="{% if 'companies' in request.resolver_match.namespace %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                   class="{% if 'companies' in request.resolver_match.namespace and 'company_detail' in request.resolver_match.url_name %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                                     <i class="fas fa-building mr-2"></i>
                                     Company
+                                </a>
+                                <a href="{% url 'companies:branch_list' %}" 
+                                   class="{% if 'companies' in request.resolver_match.namespace and 'branch' in request.resolver_match.url_name %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    Branches
                                 </a>
                                 {% endif %}
                             </div>
@@ -192,6 +197,9 @@
                         {% if user.can_manage_company %}
                         <a href="{% url 'companies:company_detail' user.company.id %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
                             <i class="fas fa-building mr-2"></i>Company
+                        </a>
+                        <a href="{% url 'companies:branch_list' %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Branches
                         </a>
                         {% endif %}
                     </div>

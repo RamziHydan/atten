@@ -30,6 +30,15 @@ class CustomUser(AbstractUser):
         related_name='employees',
         help_text="Company this user belongs to"
     )
+    # Branch assignment for HR managers to limit their access scope
+    managed_branch = models.ForeignKey(
+        'companies.Branch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='hr_managers',
+        help_text="Branch this HR manager is responsible for (HR_EMPLOYEE role only)"
+    )
     phone_number = models.CharField(
         max_length=20, 
         blank=True, 
@@ -80,6 +89,25 @@ class CustomUser(AbstractUser):
     def can_manage_hr(self):
         """Check if user can manage HR operations"""
         return self.role in [UserRole.SUPER_ADMIN, UserRole.COMPANY_MANAGER, UserRole.HR_EMPLOYEE]
+    
+    def get_accessible_employees(self):
+        """Get employees this user can access based on their role and branch assignment"""
+        if self.role == UserRole.SUPER_ADMIN:
+            # Super admins can see all employees
+            return CustomUser.objects.all()
+        elif self.role == UserRole.COMPANY_MANAGER:
+            # Company managers can see all employees in their company
+            return CustomUser.objects.filter(company=self.company)
+        elif self.role == UserRole.HR_EMPLOYEE and self.managed_branch:
+            # HR employees can only see employees in their assigned branch
+            from apps.companies.models import DepartmentMembership
+            return CustomUser.objects.filter(
+                departmentmembership__department__branch=self.managed_branch,
+                departmentmembership__is_active=True
+            ).distinct()
+        else:
+            # Regular employees or HR without branch assignment see no one
+            return CustomUser.objects.none()
 
 
 class UserProfile(models.Model):
