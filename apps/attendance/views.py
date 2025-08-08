@@ -2,19 +2,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db import models
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
-from .models import AttendanceGroup, CheckIn, Period
-from apps.companies.models import Company, Branch
-from apps.users.models import CustomUser
-import json
 from django.http import JsonResponse
 from datetime import datetime, timedelta
+import json
 
 from .models import AttendanceGroup, CheckIn, AttendanceSummary, Period, AttendanceGroupMembership
 from apps.users.models import CustomUser
-from apps.companies.models import Branch
+from apps.companies.models import Company, Branch
 
 
 def get_accessible_employees(user):
@@ -395,10 +393,12 @@ def reports(request):
     user = request.user
     today = timezone.now().date()
     
-    # Get date range from query parameters (default to current month)
+    # Get date range and filter parameters from query
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     report_type = request.GET.get('report_type', 'daily')
+    department_id = request.GET.get('department')
+    employee_id = request.GET.get('employee')
     
     if not start_date:
         start_date = today.replace(day=1).strftime('%Y-%m-%d')
@@ -417,6 +417,25 @@ def reports(request):
     
     # Get accessible employees based on user role
     accessible_employees = get_accessible_employees(user)
+    
+    # Apply department filter if specified
+    if department_id:
+        try:
+            from apps.companies.models import Department
+            department = Department.objects.get(id=department_id)
+            # Filter employees by department membership
+            accessible_employees = accessible_employees.filter(
+                departmentmembership__department=department
+            )
+        except (Department.DoesNotExist, ValueError):
+            department_id = None
+    
+    # Apply employee filter if specified
+    if employee_id:
+        try:
+            accessible_employees = accessible_employees.filter(id=employee_id)
+        except ValueError:
+            employee_id = None
     
     # Get attendance groups based on user role
     if user.role == 'SUPER_ADMIN':
@@ -496,6 +515,18 @@ def reports(request):
     # Recent activity (last 10 check-ins)
     recent_activity = checkins.order_by('-timestamp')[:10]
     
+    # Get departments for filter dropdown
+    from apps.companies.models import Department
+    if user.role == 'SUPER_ADMIN':
+        accessible_departments = Department.objects.all()
+    elif user.role == 'HR_EMPLOYEE' and user.managed_branch:
+        accessible_departments = Department.objects.filter(branch=user.managed_branch)
+    else:
+        accessible_departments = Department.objects.filter(branch__company=user.company)
+    
+    # Get all accessible employees for dropdown (before filtering)
+    all_accessible_employees = get_accessible_employees(user)
+    
     # Convert daily_trend to JSON for JavaScript
     import json
     daily_trend_json = json.dumps(daily_trend)
@@ -505,6 +536,8 @@ def reports(request):
         'start_date': start_date,
         'end_date': end_date,
         'report_type': report_type,
+        'department_id': department_id,
+        'employee_id': employee_id,
         
         # Statistics
         'total_checkins': total_checkins,
@@ -523,6 +556,8 @@ def reports(request):
         # Filter options
         'attendance_groups': attendance_groups,
         'accessible_employees': accessible_employees,
+        'all_accessible_employees': all_accessible_employees,
+        'accessible_departments': accessible_departments,
         'total_accessible_employees': accessible_employees.count(),
     }
     
