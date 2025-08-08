@@ -135,18 +135,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 # Custom User Model
+# This tells Django to use our CustomUser model instead of the default User model
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Login/Logout URLs
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
 
 # Media files (user uploads)
 MEDIA_URL = '/media/'
@@ -171,8 +166,7 @@ if not DEBUG:
     # Session security
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_HTTPONLY = True
+
     
     # Force HTTPS redirect (uncomment if using HTTPS)
     # SECURE_SSL_REDIRECT = True
