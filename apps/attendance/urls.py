@@ -7,6 +7,7 @@ urlpatterns = [
     # Check-in/Check-out functionality
     path('check-in/', views.check_in, name='check_in'),
     path('check-out/', views.check_out, name='check_out'),
+    path('api/today-status/', views.today_status_api, name='today_status_api'),
     path('history/', views.history, name='history'),
     path('checkins/', views.check_in_list, name='check_in_list'),
     path('reports/', views.reports, name='reports'),

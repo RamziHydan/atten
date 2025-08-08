@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Out - AttendanceHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-pink-100 min-h-screen">
+    <!-- Employee Check-out Interface -->
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="mx-auto w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-sign-out-alt text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Check Out</h1>
+                <p class="text-gray-600">Complete your work day</p>
+            </div>
+
+            {% if available_checkins %}
+                <!-- Check-out Form -->
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                    <div class="p-6">
+                        <form id="checkoutForm" method="post" class="space-y-6">
+                            {% csrf_token %}
+                            
+                            <!-- Check-in Selection -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-4">
+                                    Select Check-in to Check Out From:
+                                </label>
+                                <div class="space-y-3">
+                                    {% for checkin in available_checkins %}
+                                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 cursor-pointer transition-all duration-200 {% if forloop.first %}border-red-300 bg-red-50{% endif %}">
+                                        <input type="radio" name="checkin_id" value="{{ checkin.id }}" 
+                                               class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300" 
+                                               {% if forloop.first %}checked{% endif %} required>
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <p class="text-base font-medium text-gray-900">
+                                                        {{ checkin.attendance_group.name }}
+                                                    </p>
+                                                    <p class="text-sm text-gray-600">
+                                                        Checked in at {{ checkin.timestamp|date:"H:i" }}
+                                                    </p>
+                                                    {% if checkin.period %}
+                                                    <p class="text-xs text-blue-600 mt-1">
+                                                        {{ checkin.period.name }}
+                                                    </p>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Location (Hidden inputs - will be populated by JavaScript) -->
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+
+                            <!-- Notes -->
+                            <div>
+                                <label for="notes" class="block text-sm font-medium text-gray-700">
+                                    Notes (Optional)
+                                </label>
+                                <textarea id="notes" name="notes" rows="3" 
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                                        placeholder="Any additional notes for this check-out..."></textarea>
+                            </div>
+
+                            <!-- Location Status -->
+                            <div id="locationStatus" class="hidden">
+                                <div class="flex items-center space-x-2 p-3 bg-yellow-50 rounded-lg">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600">Getting your location...</span>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="mt-6">
+                                <button type="submit" id="checkoutBtn"
+                                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-lg">
+                                    <i class="fas fa-sign-out-alt mr-3 text-lg"></i>
+                                    <span class="text-lg">Check Out Now</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <!-- No Available Check-ins -->
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                    <div class="p-8 text-center">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">No Active Check-ins</h3>
+                        <p class="text-gray-600 mb-6">
+                            You don't have any active check-ins to check out from today.
+                        </p>
+                        <a href="{% url 'attendance:check_in' %}" 
+                           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Check In First
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Current Time Display -->
+            <div class="mt-6 bg-white shadow-lg rounded-2xl">
+                <div class="p-6 text-center">
+                    <div class="text-4xl font-bold text-gray-900 mb-2" id="current-time"></div>
+                    <div class="text-base text-gray-600" id="current-date"></div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions for Employee -->
+            <div class="mt-6 flex space-x-4">
+                <a href="{% url 'attendance:check_in' %}" class="flex-1 bg-white shadow-lg rounded-xl p-4 text-center hover:shadow-xl transition-shadow duration-200">
+                    <i class="fas fa-sign-in-alt text-blue-500 text-2xl mb-2"></i>
+                    <div class="text-sm font-medium text-gray-900">Check In</div>
+                </a>
+                <form method="post" action="{% url 'logout' %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full bg-white shadow-lg rounded-xl p-4 text-center hover:shadow-xl transition-shadow duration-200">
+                        <i class="fas fa-power-off text-gray-500 text-2xl mb-2"></i>
+                        <div class="text-sm font-medium text-gray-900">Logout</div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString();
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    // Initialize time display
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Get user location when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        getLocation();
+    });
+
+    function getLocation() {
+        const statusDiv = document.getElementById('locationStatus');
+        if (statusDiv) {
+            statusDiv.classList.remove('hidden');
+        }
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                    if (statusDiv) {
+                        statusDiv.classList.add('hidden');
+                    }
+                },
+                function(error) {
+                    console.log('Location error:', error);
+                    if (statusDiv) {
+                        statusDiv.classList.add('hidden');
+                    }
+                    // Continue without location
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        }
+    }
+
+    // Handle form submission
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message and redirect
+                alert('Check-out successful!');
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during check-out.');
+        });
+    });
+    </script>
+</body>
+</html>

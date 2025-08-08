@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check In - AttendanceHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Employee Attendance Interface -->
+    <div class="min-h-screen flex items-center justify-center p-3">
+        <div class="w-full max-w-sm">
+
+            
+            <!-- Unified Attendance Card -->
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                <div class="p-4">
+                    <!-- Current Time Display -->
+                    <div class="text-center mb-4 p-3 bg-gray-50 rounded-xl">
+                        <div class="text-2xl font-bold text-gray-900" id="current-time"></div>
+                        <div class="text-xs text-gray-600" id="current-date"></div>
+                    </div>
+                    
+                    <!-- Attendance Group Selection -->
+                    {% if attendance_groups|length > 1 %}
+                    <div class="mb-4">
+                        <select id="attendance_group" name="attendance_group" required
+                                class="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            {% for group in attendance_groups %}
+                            <option value="{{ group.id }}" 
+                                    data-lat="{{ group.latitude }}" 
+                                    data-lng="{{ group.longitude }}" 
+                                    data-radius="{{ group.radius }}"
+                                    {% if forloop.first %}selected{% endif %}>
+                                {{ group.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <!-- Single group - auto-select -->
+                    <input type="hidden" id="attendance_group" name="attendance_group" value="{% if attendance_groups %}{{ attendance_groups.0.id }}{% endif %}">
+                    {% endif %}
+                    
+                    <!-- Hidden fields for current group data -->
+                    {% if attendance_groups %}
+                    <input type="hidden" id="group_lat" value="{{ attendance_groups.0.latitude }}">
+                    <input type="hidden" id="group_lng" value="{{ attendance_groups.0.longitude }}">
+                    <input type="hidden" id="group_radius" value="{{ attendance_groups.0.radius }}">
+                    {% endif %}
+                    
+                    <!-- Compact Map Display -->
+                    <div id="map-container" class="mb-4">
+                        <div id="map" class="h-32 w-full rounded-lg border border-gray-200"></div>
+                    </div>
+                    
+                    <!-- Status Display -->
+                    <div id="status-display" class="mb-4">
+                        <div id="location-status" class="hidden">
+                            <div class="flex items-center justify-center p-2 bg-blue-50 rounded-lg">
+                                <i class="fas fa-spinner fa-spin text-blue-500 mr-2"></i>
+                                <span class="text-sm text-blue-700">Getting location...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="location-success" class="hidden">
+                            <div class="flex items-center justify-center p-2 bg-green-50 rounded-lg">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span class="text-sm text-green-700">Ready (<span id="distance-text"></span>)</span>
+                            </div>
+                        </div>
+                        
+                        <div id="location-error" class="hidden">
+                            <div class="p-2 bg-red-50 rounded-lg">
+                                <div class="flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                                    <span class="text-sm text-red-700">Location issue</span>
+                                </div>
+                                <p class="text-xs text-red-600 text-center mt-1" id="location-error-text"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <!-- Check In Button -->
+                        <button type="button" id="checkin-btn" disabled
+                                class="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-sign-in-alt text-xl mb-1"></i>
+                            <span class="text-sm font-medium">Check In</span>
+                        </button>
+                        
+                        <!-- Check Out Button -->
+                        <button type="button" id="checkout-btn" disabled
+                                class="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-sign-out-alt text-xl mb-1"></i>
+                            <span class="text-sm font-medium">Check Out</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Today's Status -->
+                    <div id="today-status" class="mb-4 p-3 bg-gray-50 rounded-xl">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-1">Today's Status</div>
+                            <div id="status-text" class="text-sm font-medium text-gray-700">Ready to check in</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden fields -->
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    
+                    <!-- Logout Button -->
+                    <form method="post" action="{% url 'logout' %}" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full flex items-center justify-center py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-power-off mr-2 text-sm"></i>
+                            <span class="text-sm">Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS for maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+    let userLat, userLng;
+    let groupLat, groupLng, groupRadius;
+    let currentStatus = 'none'; // 'none', 'checked_in', 'checked_out'
+    let todayCheckins = [];
+    let map, userMarker, groupCircle;
+
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Set up group selection handling
+        const groupSelect = document.getElementById('attendance_group');
+        if (groupSelect && groupSelect.tagName === 'SELECT') {
+            // Multiple groups - handle selection change
+            groupSelect.addEventListener('change', handleGroupChange);
+            handleGroupChange(); // Initialize with first selection
+        } else {
+            // Single group - get data from hidden fields
+            groupLat = parseFloat(document.getElementById('group_lat')?.value);
+            groupLng = parseFloat(document.getElementById('group_lng')?.value);
+            groupRadius = parseInt(document.getElementById('group_radius')?.value);
+            
+            if (groupLat && groupLng) {
+                initializeMap();
+                getLocation();
+            }
+        }
+        
+        // Load today's status
+        loadTodayStatus();
+        
+        // Add button listeners
+        document.getElementById('checkin-btn').addEventListener('click', handleCheckIn);
+        document.getElementById('checkout-btn').addEventListener('click', handleCheckOut);
+    });
+
+    function handleGroupChange() {
+        const groupSelect = document.getElementById('attendance_group');
+        const selectedOption = groupSelect.options[groupSelect.selectedIndex];
+        
+        if (selectedOption && selectedOption.value) {
+            groupLat = parseFloat(selectedOption.dataset.lat);
+            groupLng = parseFloat(selectedOption.dataset.lng);
+            groupRadius = parseInt(selectedOption.dataset.radius);
+            
+            if (groupLat && groupLng) {
+                initializeMap();
+                getLocation();
+            }
+        }
+    }
+
+    function initializeMap() {
+        if (map) {
+            map.remove();
+        }
+        
+        // Initialize map centered on the attendance group location
+        map = L.map('map').setView([groupLat, groupLng], 16);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Add group location circle (attendance area)
+        groupCircle = L.circle([groupLat, groupLng], {
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.2,
+            radius: groupRadius
+        }).addTo(map);
+        
+        // Add center marker for the attendance location
+        L.marker([groupLat, groupLng], {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: #3b82f6; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                iconSize: [10, 10],
+                iconAnchor: [5, 5]
+            })
+        }).addTo(map);
+    }
+
+    function getLocation() {
+        showStatus('location-status');
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                showPosition,
+                showError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        } else {
+            showError({ code: 0, message: "Geolocation not supported" });
+        }
+    }
+
+    function showPosition(position) {
+        userLat = position.coords.latitude;
+        userLng = position.coords.longitude;
+        
+        document.getElementById('latitude').value = userLat;
+        document.getElementById('longitude').value = userLng;
+        
+        const distance = calculateDistance(userLat, userLng, groupLat, groupLng);
+        const isWithinRadius = distance <= groupRadius;
+        
+        if (isWithinRadius) {
+            showStatus('location-success');
+            document.getElementById('distance-text').textContent = `${Math.round(distance)}m`;
+            enableButtons();
+        } else {
+            showStatus('location-error');
+            document.getElementById('location-error-text').textContent = 
+                `${Math.round(distance)}m away (need within ${groupRadius}m)`;
+            enableButtons(); // Call enableButtons even when out of range to update button states
+        }
+    }
+
+    function showError(error) {
+        showStatus('location-error');
+        let errorMessage = "Location unavailable";
+        if (error.code === 1) errorMessage = "Location denied";
+        document.getElementById('location-error-text').textContent = errorMessage;
+    }
+
+    function showStatus(statusId) {
+        ['location-status', 'location-success', 'location-error'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById(statusId).classList.remove('hidden');
+    }
+
+    function enableButtons() {
+        const checkinBtn = document.getElementById('checkin-btn');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        
+        // Enable/disable based on current status and location
+        const locationReady = userLat && userLng;
+        
+        console.log('Enabling buttons. Status:', currentStatus, 'Location ready:', locationReady);
+        
+        if (currentStatus === 'none' || currentStatus === 'checked_out') {
+            checkinBtn.disabled = !locationReady;
+            checkoutBtn.disabled = true;
+            console.log('Case: none/checked_out - checkin enabled:', !checkinBtn.disabled, 'checkout enabled:', !checkoutBtn.disabled);
+        } else if (currentStatus === 'checked_in') {
+            checkinBtn.disabled = true;
+            checkoutBtn.disabled = false; // Always enable checkout when checked in (remove location requirement)
+            console.log('Case: checked_in - checkin enabled:', !checkinBtn.disabled, 'checkout enabled:', !checkoutBtn.disabled);
+        } else {
+            // Default state - both disabled until location/status is determined
+            checkinBtn.disabled = true;
+            checkoutBtn.disabled = true;
+            console.log('Case: default - both buttons disabled');
+        }
+    }
+
+    function loadTodayStatus() {
+        // Fetch today's check-ins to determine current status
+        fetch('/attendance/api/today-status/')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Raw API response:', data);
+                todayCheckins = data.checkins || [];
+                console.log('Processed checkins:', todayCheckins);
+                updateStatusDisplay();
+                enableButtons(); // Always call enableButtons after status update
+            })
+            .catch(error => {
+                console.log('Status check failed:', error);
+                updateStatusDisplay();
+                enableButtons(); // Always call enableButtons even on error
+            });
+    }
+
+    function updateStatusDisplay() {
+        const statusText = document.getElementById('status-text');
+        
+        console.log('Updating status display. Today checkins:', todayCheckins);
+        
+        if (todayCheckins.length === 0) {
+            currentStatus = 'none';
+            statusText.textContent = 'Ready to check in';
+            console.log('Status set to: none');
+        } else {
+            const lastCheckin = todayCheckins[todayCheckins.length - 1];
+            console.log('Last checkin:', lastCheckin);
+            
+            if (lastCheckin.type === 'IN') {
+                currentStatus = 'checked_in';
+                statusText.textContent = `Checked in at ${lastCheckin.time}`;
+                console.log('Status set to: checked_in');
+            } else {
+                currentStatus = 'checked_out';
+                statusText.textContent = `Checked out at ${lastCheckin.time}`;
+                console.log('Status set to: checked_out');
+            }
+        }
+        
+        console.log('Current status:', currentStatus);
+    }
+
+    function handleCheckIn() {
+        performAction('check-in', '/attendance/check-in/');
+    }
+
+    function handleCheckOut() {
+        performAction('check-out', '/attendance/check-out/');
+    }
+
+    function performAction(actionType, url) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('attendance_group', document.getElementById('attendance_group').value);
+        formData.append('latitude', userLat);
+        formData.append('longitude', userLng);
+        
+        if (actionType === 'check-out' && todayCheckins.length > 0) {
+            const lastCheckin = todayCheckins.find(c => c.type === 'IN');
+            if (lastCheckin) {
+                formData.append('checkin_id', lastCheckin.id);
+            }
+        }
+
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update local status
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                if (actionType === 'check-in') {
+                    todayCheckins.push({type: 'IN', time: timeStr, id: data.checkin_id});
+                    currentStatus = 'checked_in';
+                } else {
+                    todayCheckins.push({type: 'OUT', time: timeStr});
+                    currentStatus = 'checked_out';
+                }
+                
+                updateStatusDisplay();
+                enableButtons();
+                
+                // Show brief success feedback
+                const btn = actionType === 'check-in' ? document.getElementById('checkin-btn') : document.getElementById('checkout-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-xl mb-1"></i><span class="text-sm font-medium">Success!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+                
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371e3;
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lng2-lng1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+    }
+    </script>
+</body>
+</html>

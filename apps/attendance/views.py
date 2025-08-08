@@ -1,13 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.utils import timezone
-from django.views.decorators.http import require_POST, require_http_methods
-from django.db.models import Q, Count
-from django.db import models
-from datetime import datetime, timedelta
+from django.views.decorators.http import require_http_methods, require_POST
+from .models import AttendanceGroup, CheckIn, Period
+from apps.companies.models import Company, Branch
+from apps.users.models import CustomUser
 import json
+from django.http import JsonResponse
+from datetime import datetime, timedelta
 
 from .models import AttendanceGroup, CheckIn, AttendanceSummary, Period, AttendanceGroupMembership
 from apps.users.models import CustomUser
@@ -117,6 +120,7 @@ def check_in(request):
             
             return JsonResponse({
                 'success': True,
+                'checkin_id': checkin.id,
                 'redirect_url': '/dashboard/'
             })
             
@@ -130,7 +134,13 @@ def check_in(request):
         'attendance_groups': attendance_groups,
     }
     
-    return render(request, 'attendance/check_in.html', context)
+    # Choose template based on user role
+    if user.role == 'EMPLOYEE':
+        template_name = 'attendance/employee_checkin.html'
+    else:
+        template_name = 'attendance/check_in.html'
+    
+    return render(request, template_name, context)
 
 
 @login_required
@@ -207,7 +217,43 @@ def check_out(request):
         'available_checkins': available_checkins,
     }
     
-    return render(request, 'attendance/check_out.html', context)
+    # Choose template based on user role
+    if user.role == 'EMPLOYEE':
+        template_name = 'attendance/employee_checkout.html'
+    else:
+        template_name = 'attendance/check_out.html'
+    
+    return render(request, template_name, context)
+
+
+@login_required
+def today_status_api(request):
+    """
+    API endpoint to get today's check-in/out status for the current user.
+    """
+    user = request.user
+    today = timezone.now().date()
+    
+    # Get today's check-ins and check-outs
+    checkins = CheckIn.objects.filter(
+        employee=user,
+        timestamp__date=today
+    ).order_by('timestamp')
+    
+    # Format the data for the frontend
+    checkins_data = []
+    for checkin in checkins:
+        checkins_data.append({
+            'id': checkin.id,
+            'type': checkin.type,
+            'time': checkin.timestamp.strftime('%H:%M'),
+            'group': checkin.attendance_group.name if checkin.attendance_group else 'Unknown'
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'checkins': checkins_data
+    })
 
 
 @login_required
