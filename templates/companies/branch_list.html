@@ -3,17 +3,20 @@
 {% block title %}Branch Management{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Branch Management</h1>
-            <p class="text-gray-600 mt-2">Manage your company's branches and locations</p>
-        </div>
-        <a href="{% url 'companies:branch_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-            <i class="fas fa-plus mr-2"></i>Add Branch
-        </a>
-    </div>
+<!-- Floating Add Branch Button -->
+<div class="fixed bottom-6 right-6 z-50">
+    <!-- Pulsing Alert Border -->
+    <div class="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-75"></div>
+    <div class="absolute inset-0 bg-blue-500 rounded-full animate-pulse opacity-50"></div>
+    
+    <!-- Main Button -->
+    <a href="{% url 'companies:branch_create' %}" 
+       class="relative bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group flex items-center justify-center w-14 h-14"
+       title="Add Branch">
+        <i class="fas fa-plus text-lg group-hover:rotate-90 transition-transform duration-300"></i>
+        <span class="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Add Branch</span>
+    </a>
+</div>
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

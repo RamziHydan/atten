@@ -9,32 +9,34 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'attendance:group_list' %}" 
-                       class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </a>
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">{{ group.name }}</h1>
-                        <p class="mt-2 text-gray-600">{{ group.company.name }} - {{ group.branch.name }}</p>
-                    </div>
-                </div>
-                {% if can_edit %}
-                <div class="flex space-x-3">
-                    <a href="{% url 'attendance:group_edit' group.id %}" 
-                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <i class="fas fa-edit mr-2"></i>
-                        Edit Group
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+<!-- Floating Edit Group Button -->
+{% if can_edit %}
+<div class="fixed bottom-6 right-6 z-50">
+    <!-- Pulsing Alert Border -->
+    <div class="absolute inset-0 bg-primary-400 rounded-full animate-ping opacity-75"></div>
+    <div class="absolute inset-0 bg-primary-500 rounded-full animate-pulse opacity-50"></div>
+    
+    <!-- Main Button -->
+    <a href="{% url 'attendance:group_edit' group.id %}" 
+       class="relative bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group flex items-center justify-center w-14 h-14"
+       title="Edit Group">
+        <i class="fas fa-edit text-lg group-hover:rotate-90 transition-transform duration-300"></i>
+        <span class="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Edit Group</span>
+    </a>
+</div>
+{% endif %}
+
+<!-- Back Button -->
+<div class="fixed top-20 left-6 z-40">
+    <a href="{% url 'attendance:group_list' %}" 
+       class="bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-800 p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+       title="Back to Groups">
+        <i class="fas fa-arrow-left text-lg"></i>
+    </a>
+</div>
+
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
