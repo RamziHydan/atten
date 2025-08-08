@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # For production, use environment variable: export SECRET_KEY='your-secret-key-here'
-SECRET_KEY = os.environ.get(SECRET_KEY, 'django-insecure-x3v9rf23@=rtich)n#qhq!0j%7)f-f$l_b&%ifb^2)%zb&l7(&')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-x3v9rf23@=rtich)n#qhq!0j%7)f-f$l_b&%ifb^2)%zb&l7(&')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # For production, set: export DEBUG=False
@@ -30,7 +30,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 # For PythonAnywhere deployment - add your username here
 # Example: ALLOWED_HOSTS = ['yourusername.pythonanywhere.com', 'localhost', '127.0.0.1']
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'ramzihaidan537.pythonanywhere.com,localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -91,10 +91,10 @@ DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
         'NAME': os.environ.get('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'root'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', ''),
+        'PORT': os.environ.get('DB_PORT', ''),
     }
 }
 

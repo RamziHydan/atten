@@ -9,10 +9,9 @@ Replace 'yourusername' with your actual PythonAnywhere username.
 
 import os
 import sys
-
 # Add your project directory to the Python path
 # Replace 'yourusername' with your actual PythonAnywhere username
-project_home = '/home/yourusername/attendance-platform'
+project_home = '/home/ramzihaidan537/atten'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
@@ -21,16 +20,16 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'core.settings'
 
 # Set production environment variables
 # IMPORTANT: Replace these with your actual values
-os.environ.setdefault('SECRET_KEY', 'your-super-secret-key-here-generate-a-new-one')
+os.environ.setdefault('SECRET_KEY', 'django-insecure-x3v9rf23@=rtich)n#qhq!0j%7)f-f$l_b&%ifb^2)%zb&l7(&')
 os.environ.setdefault('DEBUG', 'False')
-os.environ.setdefault('ALLOWED_HOSTS', 'yourusername.pythonanywhere.com')
+os.environ.setdefault('ALLOWED_HOSTS', 'ramzihaidan537.pythonanywhere.com')
 
 # Optional: Database configuration (if using MySQL/PostgreSQL)
 # os.environ.setdefault('DB_ENGINE', 'django.db.backends.mysql')
-# os.environ.setdefault('DB_NAME', 'yourusername$attendance')
-# os.environ.setdefault('DB_USER', 'yourusername')
+# os.environ.setdefault('DB_NAME', 'ramzihaidan537$attendance')
+# os.environ.setdefault('DB_USER', 'ramzihaidan537')
 # os.environ.setdefault('DB_PASSWORD', 'your-database-password')
-# os.environ.setdefault('DB_HOST', 'yourusername.mysql.pythonanywhere-services.com')
+# os.environ.setdefault('DB_HOST', 'ramzihaidan537.mysql.pythonanywhere-services.com')
 
 # Optional: Additional CSRF trusted origins
 # os.environ.setdefault('CSRF_TRUSTED_ORIGINS', 'https://yourdomain.com,https://www.yourdomain.com')
