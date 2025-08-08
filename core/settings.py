@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x3v9rf23@=rtich)n#qhq!0j%7)f-f$l_b&%ifb^2)%zb&l7(&'
+# For production, use environment variable: export SECRET_KEY='your-secret-key-here'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-x3v9rf23@=rtich)n#qhq!0j%7)f-f$l_b&%ifb^2)%zb&l7(&')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# For production, set: export DEBUG=False
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# For PythonAnywhere deployment - add your username here
+# Example: ALLOWED_HOSTS = ['yourusername.pythonanywhere.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'ramzihaidan537.pythonanywhere.com,localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -49,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,10 +86,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Default to SQLite for development, can be overridden for production
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Regular SQLite for now
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.environ.get('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', ''),
+        'PORT': os.environ.get('DB_PORT', ''),
     }
 }
 
@@ -124,18 +135,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 # Custom User Model
+# This tells Django to use our CustomUser model instead of the default User model
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Login/Logout URLs
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
 
 # Media files (user uploads)
 MEDIA_URL = '/media/'
@@ -148,6 +154,34 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Security settings for production
+if not DEBUG:
+    # HTTPS settings
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Session security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    
+    # Force HTTPS redirect (uncomment if using HTTPS)
+    # SECURE_SSL_REDIRECT = True
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.pythonanywhere.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Add any additional trusted origins from environment
+additional_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if additional_origins:
+    CSRF_TRUSTED_ORIGINS.extend(additional_origins.split(','))
 # SECURE_BROWSER_XSS_FILTER = True
 # SECURE_CONTENT_TYPE_NOSNIFF = True
 # X_FRAME_OPTIONS = 'DENY'
@@ -167,45 +201,35 @@ CSRF_COOKIE_SECURE = False     # Set to True in production with HTTPS
 # EMAIL_HOST_USER = 'your-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'your-app-password'
 
-# Logging configuration
+# Logging configuration - Simple console-only for production compatibility
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {name} {message}',
             'style': '{',
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'apps': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },
