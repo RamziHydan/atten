@@ -1,5 +1,6 @@
 Django>=5.2.5
 Pillow>=11.3.0
+Faker>=28.1.0
 # Future dependencies for production:
 # psycopg2-binary>=2.9.0  # For PostgreSQL
 # gunicorn>=21.0.0  # For production deployment

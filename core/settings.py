@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # 'django.contrib.gis',  # GeoDjango - temporarily disabled until GDAL is installed
     
     # Local apps
+    'apps.core',
     'apps.users',
     'apps.companies',
     'apps.attendance',
