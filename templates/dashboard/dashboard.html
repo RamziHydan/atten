@@ -54,8 +54,16 @@
         </div>
         <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-                {% if last_checkin %}
-                    <span class="text-gray-600">Last check-in: {{ last_checkin.timestamp|date:"H:i" }}</span>
+                {% if today_stats.is_checked_in %}
+                    <span class="text-green-600 font-medium">
+                        <i class="fas fa-circle text-xs mr-1"></i>
+                        Currently checked in
+                    </span>
+                {% elif today_stats.total_checkins > 0 %}
+                    <span class="text-gray-600">
+                        <i class="fas fa-clock mr-1"></i>
+                        {{ today_stats.hours_worked }}h worked today
+                    </span>
                 {% else %}
                     <span class="text-gray-600">No check-ins today</span>
                 {% endif %}
@@ -86,7 +94,10 @@
         </div>
         <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-                <span class="text-gray-600">{{ week_stats.hours_worked }}h worked</span>
+                <span class="text-gray-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    {{ week_stats.hours_worked }}h worked
+                </span>
             </div>
         </div>
     </div>
@@ -114,7 +125,10 @@
         </div>
         <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-                <span class="text-gray-600">{{ month_stats.hours_worked }}h worked</span>
+                <span class="text-gray-600">
+                    <i class="fas fa-calendar mr-1"></i>
+                    {{ month_stats.hours_worked }}h worked
+                </span>
             </div>
         </div>
     </div>
@@ -147,7 +161,10 @@
         </div>
         <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-                <span class="text-gray-600">Target: 8h/day</span>
+                <span class="text-gray-600">
+                    <i class="fas fa-target mr-1"></i>
+                    Target: 8h/day
+                </span>
             </div>
         </div>
     </div>
