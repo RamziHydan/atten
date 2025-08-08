@@ -386,15 +386,144 @@ def check_in_list(request):
 @login_required
 def reports(request):
     """
-    Reports view for HR (requires HR permissions).
+    Comprehensive attendance reports view for HR and management.
     """
     if not request.user.can_manage_hr:
         messages.error(request, 'You do not have permission to view this page.')
         return redirect('dashboard:dashboard')
     
-    # This will be implemented with more detailed reporting
+    user = request.user
+    today = timezone.now().date()
+    
+    # Get date range from query parameters (default to current month)
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    report_type = request.GET.get('report_type', 'daily')
+    
+    if not start_date:
+        start_date = today.replace(day=1).strftime('%Y-%m-%d')
+    if not end_date:
+        end_date = today.strftime('%Y-%m-%d')
+    
+    # Parse dates
+    try:
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        start_date_obj = today.replace(day=1)
+        end_date_obj = today
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+        end_date = end_date_obj.strftime('%Y-%m-%d')
+    
+    # Get accessible employees based on user role
+    accessible_employees = get_accessible_employees(user)
+    
+    # Get attendance groups based on user role
+    if user.role == 'SUPER_ADMIN':
+        attendance_groups = AttendanceGroup.objects.filter(is_active=True)
+    elif user.role == 'HR_EMPLOYEE' and user.managed_branch:
+        attendance_groups = AttendanceGroup.objects.filter(
+            branch=user.managed_branch, is_active=True
+        )
+    else:
+        attendance_groups = AttendanceGroup.objects.filter(
+            company=user.company, is_active=True
+        )
+    
+    # Get check-ins for the date range
+    checkins = CheckIn.objects.filter(
+        employee__in=accessible_employees,
+        timestamp__date__gte=start_date_obj,
+        timestamp__date__lte=end_date_obj
+    ).select_related('employee', 'attendance_group', 'period')
+    
+    # Calculate statistics
+    total_checkins = checkins.count()
+    unique_employees = checkins.values('employee').distinct().count()
+    
+    # Today's statistics
+    today_checkins = checkins.filter(timestamp__date=today)
+    today_employees_present = today_checkins.filter(type='IN').values('employee').distinct().count()
+    
+    # Late arrivals (based on period start times)
+    late_checkins = checkins.filter(
+        type='IN',
+        status__in=['LATE', 'INVALID_TIME']
+    ).count()
+    
+    # Attendance by group
+    group_stats = []
+    for group in attendance_groups:
+        group_checkins = checkins.filter(attendance_group=group)
+        group_employees = group_checkins.values('employee').distinct().count()
+        group_total_checkins = group_checkins.count()
+        
+        group_stats.append({
+            'group': group,
+            'total_checkins': group_total_checkins,
+            'unique_employees': group_employees,
+            'avg_daily_checkins': round(group_total_checkins / max((end_date_obj - start_date_obj).days + 1, 1), 1)
+        })
+    
+    # Daily attendance trend (last 7 days)
+    daily_trend = []
+    for i in range(7):
+        date = today - timedelta(days=i)
+        daily_checkins = checkins.filter(
+            timestamp__date=date,
+            type='IN'
+        ).values('employee').distinct().count()
+        daily_trend.append({
+            'date': date.strftime('%m/%d'),
+            'count': daily_checkins
+        })
+    daily_trend.reverse()  # Show oldest to newest
+    
+    # Employee attendance summary
+    employee_summary = []
+    for employee in accessible_employees[:10]:  # Top 10 for performance
+        emp_checkins = checkins.filter(employee=employee)
+        total_days = emp_checkins.filter(type='IN').values('timestamp__date').distinct().count()
+        late_days = emp_checkins.filter(type='IN', status='LATE').values('timestamp__date').distinct().count()
+        
+        employee_summary.append({
+            'employee': employee,
+            'total_days': total_days,
+            'late_days': late_days,
+            'on_time_rate': round((total_days - late_days) / max(total_days, 1) * 100, 1) if total_days > 0 else 0
+        })
+    
+    # Recent activity (last 10 check-ins)
+    recent_activity = checkins.order_by('-timestamp')[:10]
+    
+    # Convert daily_trend to JSON for JavaScript
+    import json
+    daily_trend_json = json.dumps(daily_trend)
+    
     context = {
         'title': 'Attendance Reports',
+        'start_date': start_date,
+        'end_date': end_date,
+        'report_type': report_type,
+        
+        # Statistics
+        'total_checkins': total_checkins,
+        'unique_employees': unique_employees,
+        'today_employees_present': today_employees_present,
+        'late_checkins': late_checkins,
+        'late_percentage': round(late_checkins / max(total_checkins, 1) * 100, 1) if total_checkins > 0 else 0,
+        
+        # Data for charts and tables
+        'group_stats': group_stats,
+        'daily_trend': daily_trend,
+        'daily_trend_json': daily_trend_json,
+        'employee_summary': employee_summary,
+        'recent_activity': recent_activity,
+        
+        # Filter options
+        'attendance_groups': attendance_groups,
+        'accessible_employees': accessible_employees,
+        'total_accessible_employees': accessible_employees.count(),
     }
     
     return render(request, 'attendance/reports.html', context)

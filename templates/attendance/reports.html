@@ -3,146 +3,275 @@
 
 {% block title %}Attendance Reports - {{ block.super }}{% endblock %}
 
+{% block extra_head %}
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Attendance Reports</h1>
-            <p class="mt-2 text-gray-600">Generate and view comprehensive attendance analytics</p>
+        
+        <!-- Filters -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <form method="get" class="flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-48">
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                </div>
+                <div class="flex-1 min-w-48">
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                </div>
+                <div class="flex-1 min-w-48">
+                    <label for="report_type" class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                    <select id="report_type" name="report_type" 
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Daily Summary</option>
+                        <option value="weekly" {% if report_type == 'weekly' %}selected{% endif %}>Weekly Summary</option>
+                        <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Monthly Summary</option>
+                    </select>
+                </div>
+                <button type="submit" 
+                        class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <i class="fas fa-search mr-2"></i>Generate Report
+                </button>
+            </form>
         </div>
 
-        <!-- Report Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Daily Report -->
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Check-ins -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                            <i class="fas fa-calendar-day text-blue-600"></i>
+                            <i class="fas fa-sign-in-alt text-blue-600"></i>
                         </div>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-900">Daily Report</h3>
-                        <p class="text-sm text-gray-500">Today's attendance summary</p>
+                        <p class="text-sm font-medium text-gray-500">Total Check-ins</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_checkins|default:0 }}</p>
                     </div>
-                </div>
-                <div class="mt-4">
-                    <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-150">
-                        Generate Report
-                    </button>
                 </div>
             </div>
 
-            <!-- Weekly Report -->
+            <!-- Active Employees -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                            <i class="fas fa-calendar-week text-green-600"></i>
+                            <i class="fas fa-users text-green-600"></i>
                         </div>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-900">Weekly Report</h3>
-                        <p class="text-sm text-gray-500">This week's attendance trends</p>
+                        <p class="text-sm font-medium text-gray-500">Active Employees</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ unique_employees|default:0 }}</p>
                     </div>
-                </div>
-                <div class="mt-4">
-                    <button class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-150">
-                        Generate Report
-                    </button>
                 </div>
             </div>
 
-            <!-- Monthly Report -->
+            <!-- Today Present -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
-                            <i class="fas fa-calendar-alt text-purple-600"></i>
+                            <i class="fas fa-calendar-check text-purple-600"></i>
                         </div>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-900">Monthly Report</h3>
-                        <p class="text-sm text-gray-500">Monthly attendance analysis</p>
+                        <p class="text-sm font-medium text-gray-500">Present Today</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ today_employees_present|default:0 }}</p>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <button class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition duration-150">
-                        Generate Report
-                    </button>
+            </div>
+
+            <!-- Late Arrivals -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
+                            <i class="fas fa-clock text-red-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Late Arrivals</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ late_checkins|default:0 }}</p>
+                        <p class="text-xs text-red-600">{{ late_percentage|default:0 }}% of total</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Report Filters -->
-        <div class="bg-white shadow rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Custom Report Generator</h2>
+        <!-- Daily Trend and Group Stats -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Daily Trend Table -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Daily Attendance Trend (Last 7 Days)</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-ins</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for trend in daily_trend %}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ trend.date }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium text-gray-900 mr-2">{{ trend.count }}</span>
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2 max-w-20">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ trend.count|default:0|floatformat:0 }}0%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="px-4 py-3 text-center text-gray-500">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="p-6">
-                <form class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                        <input type="date" id="start_date" name="start_date"
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+
+            <!-- Attendance by Group -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Attendance by Group</h3>
+                <div class="space-y-4">
+                    {% for stat in group_stats %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ stat.group.name }}</p>
+                            <p class="text-sm text-gray-500">{{ stat.unique_employees }} employees</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-semibold text-gray-900">{{ stat.total_checkins }}</p>
+                            <p class="text-xs text-gray-500">{{ stat.avg_daily_checkins }}/day avg</p>
+                        </div>
                     </div>
-                    <div>
-                        <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                        <input type="date" id="end_date" name="end_date"
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                        <select id="department" name="department"
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                            <option value="">All Departments</option>
-                            <option value="engineering">Engineering</option>
-                            <option value="hr">Human Resources</option>
-                            <option value="sales">Sales</option>
-                            <option value="marketing">Marketing</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" 
-                                class="w-full bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition duration-150">
-                            <i class="fas fa-chart-bar mr-2"></i>
-                            Generate Custom Report
-                        </button>
-                    </div>
-                </form>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">No attendance groups found</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
-        <!-- Sample Report Data -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Sample Report Data</h2>
+        <!-- Employee Performance -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Employee Summary -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Employee Performance</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Late</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">On-Time Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for summary in employee_summary %}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ summary.employee.get_full_name|default:summary.employee.username }}</div>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ summary.total_days }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600">{{ summary.late_days }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if summary.on_time_rate >= 90 %}bg-green-100 text-green-800
+                                        {% elif summary.on_time_rate >= 70 %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ summary.on_time_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-center text-gray-500">No employee data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-green-600">92%</div>
-                        <div class="text-sm text-gray-500">Overall Attendance Rate</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-blue-600">8.2</div>
-                        <div class="text-sm text-gray-500">Average Hours/Day</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-purple-600">15</div>
-                        <div class="text-sm text-gray-500">Late Arrivals This Month</div>
-                    </div>
-                </div>
 
-                <div class="text-center text-gray-500">
-                    <i class="fas fa-chart-pie text-6xl mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Advanced Analytics Coming Soon</h3>
-                    <p>Detailed charts, graphs, and analytics will be available here.</p>
-                    <p class="text-sm mt-2">Features include: attendance trends, productivity metrics, department comparisons, and more!</p>
+            <!-- Recent Activity -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+                <div class="space-y-3">
+                    {% for activity in recent_activity %}
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                {% if activity.type == 'IN' %}bg-green-100{% else %}bg-red-100{% endif %}">
+                                <i class="fas {% if activity.type == 'IN' %}fa-sign-in-alt text-green-600{% else %}fa-sign-out-alt text-red-600{% endif %} text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ activity.employee.get_full_name|default:activity.employee.username }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ activity.attendance_group.name }} • {{ activity.timestamp|date:"M d, H:i" }}
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                {% if activity.type == 'IN' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if activity.type == 'IN' %}Check-in{% else %}Check-out{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">No recent activity</p>
+                    {% endfor %}
                 </div>
+            </div>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Export Reports</h3>
+            <div class="flex flex-wrap gap-4">
+                <button onclick="exportToCSV()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <i class="fas fa-file-csv mr-2"></i>Export to CSV
+                </button>
+                <button onclick="window.print()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-print mr-2"></i>Print Report
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Export to CSV function
+function exportToCSV() {
+    const data = [
+        ['Employee', 'Total Days', 'Late Days', 'On-Time Rate'],
+        {% for summary in employee_summary %}
+        ['{{ summary.employee.get_full_name|default:summary.employee.username }}', '{{ summary.total_days }}', '{{ summary.late_days }}', '{{ summary.on_time_rate }}%'],
+        {% endfor %}
+    ];
+    
+    const csvContent = data.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'attendance_report_{{ start_date }}_to_{{ end_date }}.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+</script>
 {% endblock %}
