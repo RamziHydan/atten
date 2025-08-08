@@ -3,7 +3,7 @@ from django.core.management import call_command
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from apps.companies.models import Company, Branch, Department, DepartmentMembership
-from apps.attendance.models import AttendanceGroup, Period, AttendanceGroupMembership
+from apps.attendance.models import AttendanceGroup, Period, AttendanceGroupMembership, CheckIn
 
 User = get_user_model()
 
@@ -43,6 +43,7 @@ class Command(BaseCommand):
             ('seed_groups', 'Attendance Groups', True),
             ('seed_periods', 'Work Periods', True),
             ('seed_assignments', 'Employee-Group Assignments', True),
+            ('seed_checkins', 'Attendance Records (Check-ins/Check-outs)', True),
         ]
 
         for command, description, should_run in seeder_sequence:
@@ -65,6 +66,7 @@ class Command(BaseCommand):
         try:
             # Clear in proper dependency order to handle protected foreign keys
             # We need to handle this outside of transaction due to protected foreign keys
+            CheckIn.objects.all().delete()
             AttendanceGroupMembership.objects.all().delete()
             Period.objects.all().delete()
             AttendanceGroup.objects.all().delete()
@@ -107,6 +109,7 @@ class Command(BaseCommand):
         groups = AttendanceGroup.objects.all()
         periods = Period.objects.all()
         assignments = AttendanceGroupMembership.objects.filter(is_active=True)
+        checkins = CheckIn.objects.all()
 
         summary = f"""
 DATA SUMMARY:
@@ -121,6 +124,7 @@ DATA SUMMARY:
 +-- Attendance Groups: {groups.count()} ({groups.count()//4} per branch)
 +-- Work Periods: {periods.count()} ({periods.count()//8} per group)
 +-- Group Assignments: {assignments.count()}
++-- Attendance Records: {checkins.count()} ({checkins.filter(type='IN').count()} check-ins, {checkins.filter(type='OUT').count()} check-outs)
 
 COMPANY BREAKDOWN:"""
 
