@@ -190,8 +190,8 @@ if additional_origins:
 # SECURE_HSTS_PRELOAD = True
 
 # Session settings
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-CSRF_COOKIE_SECURE = False     # Set to True in production with HTTPS
+# SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+# CSRF_COOKIE_SECURE = False     # Set to True in production with HTTPS
 
 # Email settings (for invitations and notifications)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
