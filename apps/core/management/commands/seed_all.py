@@ -62,29 +62,27 @@ class Command(BaseCommand):
         self.display_final_summary()
 
     def clear_all_data(self):
-        """Clear all seeded data in reverse dependency order"""
+        """Clear all seeded data by running individual seeder clear commands"""
         try:
-            # Clear in proper dependency order to handle protected foreign keys
-            # We need to handle this outside of transaction due to protected foreign keys
-            CheckIn.objects.all().delete()
-            AttendanceGroupMembership.objects.all().delete()
-            Period.objects.all().delete()
-            AttendanceGroup.objects.all().delete()
-            DepartmentMembership.objects.all().delete()
-            Department.objects.all().delete()
-            Branch.objects.all().delete()
+            # Use individual seeders to clear data in proper order
+            # Each seeder knows how to handle its own deletion properly
+            clear_commands = [
+                'seed_checkins',
+                'seed_assignments', 
+                'seed_periods',
+                'seed_groups',
+                'seed_departments',
+                'seed_branches',
+                'seed_companies',
+                'seed_users'
+            ]
             
-            # Delete companies first (this will cascade to users due to company field)
-            # But we need to handle the protected owner relationship
-            companies = list(Company.objects.all())
-            for company in companies:
-                # Delete all users except the owner first
-                User.objects.filter(company=company).exclude(id=company.owner.id).delete()
-                # Now delete the company (this will handle the owner)
-                company.delete()
-            
-            # Clean up any remaining users
-            User.objects.all().delete()
+            for command in clear_commands:
+                try:
+                    call_command(command, '--clear')
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f'Warning clearing {command}: {str(e)}'))
+                    # Continue with other commands
                 
             self.stdout.write(self.style.SUCCESS('SUCCESS: All data cleared successfully'))
         except Exception as e:

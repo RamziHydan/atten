@@ -148,8 +148,9 @@ class Command(BaseCommand):
         # Generate location near the group location (within radius)
         checkin_lat, checkin_lon = self.generate_location_near_group(group)
 
-        # Create check-in record
-        checkin = CheckIn.objects.create(
+        # Create check-in record with explicit timestamp
+        # Use bulk_create to bypass auto_now_add and model validation
+        checkin = CheckIn(
             employee=employee,
             attendance_group=group,
             period=period,
@@ -160,8 +161,12 @@ class Command(BaseCommand):
             status=checkin_status,
             ip_address=fake.ipv4(),
             user_agent=fake.user_agent(),
-            notes=self.generate_checkin_notes(checkin_status)
+            notes=self.generate_checkin_notes(checkin_status),
+            created_at=checkin_datetime,
+            updated_at=checkin_datetime
         )
+        # Save without calling the model's save method to avoid timestamp issues
+        CheckIn.objects.bulk_create([checkin])
         checkins_created += 1
 
         # Generate check-out (80% of the time - sometimes people forget)
@@ -183,8 +188,9 @@ class Command(BaseCommand):
             # Generate location (might be slightly different from check-in)
             checkout_lat, checkout_lon = self.generate_location_near_group(group)
 
-            # Create check-out record
-            checkout = CheckIn.objects.create(
+            # Create check-out record with explicit timestamp
+            # Use bulk_create to bypass auto_now_add and model validation
+            checkout = CheckIn(
                 employee=employee,
                 attendance_group=group,
                 period=period,
@@ -195,8 +201,12 @@ class Command(BaseCommand):
                 status=checkout_status,
                 ip_address=fake.ipv4(),
                 user_agent=fake.user_agent(),
-                notes=self.generate_checkout_notes(checkout_status)
+                notes=self.generate_checkout_notes(checkout_status),
+                created_at=checkout_datetime,
+                updated_at=checkout_datetime
             )
+            # Save without calling the model's save method to avoid timestamp issues
+            CheckIn.objects.bulk_create([checkout])
             checkins_created += 1
 
         return checkins_created

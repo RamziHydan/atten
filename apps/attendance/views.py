@@ -270,15 +270,68 @@ def check_in_list(request):
         messages.error(request, 'You do not have permission to view this page.')
         return redirect('dashboard:dashboard')
     
-    # Get all check-ins for the user's company
-    checkins = CheckIn.objects.filter(
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    
+    # Get all check-ins for the user's company with filtering options
+    checkins_queryset = CheckIn.objects.filter(
         attendance_group__company=request.user.company
     ).select_related(
         'employee', 'attendance_group', 'period'
-    ).order_by('-timestamp')[:100]  # Limit to last 100 for performance
+    ).order_by('-timestamp')
+    
+    # Add filtering options
+    employee_filter = request.GET.get('employee')
+    type_filter = request.GET.get('type')
+    status_filter = request.GET.get('status')
+    date_filter = request.GET.get('date')
+    
+    if employee_filter:
+        checkins_queryset = checkins_queryset.filter(
+            employee__username__icontains=employee_filter
+        )
+    
+    if type_filter:
+        checkins_queryset = checkins_queryset.filter(type=type_filter)
+    
+    if status_filter:
+        checkins_queryset = checkins_queryset.filter(status=status_filter)
+    
+    if date_filter:
+        try:
+            filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+            checkins_queryset = checkins_queryset.filter(timestamp__date=filter_date)
+        except ValueError:
+            pass  # Invalid date format, ignore filter
+    
+    # Pagination
+    paginator = Paginator(checkins_queryset, 25)  # Show 25 check-ins per page
+    page = request.GET.get('page')
+    
+    try:
+        checkins = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        checkins = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        checkins = paginator.page(paginator.num_pages)
+    
+    # Get filter options for the template
+    employees = get_accessible_employees(request.user).filter(
+        checkins__attendance_group__company=request.user.company
+    ).distinct().order_by('first_name', 'last_name')
     
     context = {
         'checkins': checkins,
+        'employees': employees,
+        'type_choices': CheckIn.CheckInType.choices,
+        'status_choices': CheckIn.CheckInStatus.choices,
+        'current_filters': {
+            'employee': employee_filter,
+            'type': type_filter,
+            'status': status_filter,
+            'date': date_filter,
+        }
     }
     
     return render(request, 'attendance/checkin_list.html', context)
