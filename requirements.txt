@@ -8,6 +8,7 @@ Faker>=28.1.0
 # Production dependencies
 gunicorn>=21.0.0
 whitenoise>=6.6.0
+python-dotenv>=1.0.0
 
 # Optional production dependencies (uncomment as needed):
 # psycopg2-binary>=2.9.0  # For PostgreSQL database
