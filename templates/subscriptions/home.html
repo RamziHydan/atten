@@ -3,291 +3,239 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 100px 0;
-    }
-    
-    .feature-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .pricing-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 2px solid #e9ecef;
-        position: relative;
-    }
-    
-    .pricing-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-    
-    .pricing-card.featured {
-        border-color: #007bff;
-        transform: scale(1.05);
-    }
-    
-    .pricing-card.featured::before {
-        content: "Most Popular";
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #007bff;
-        color: white;
-        padding: 5px 20px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: bold;
-    }
-    
-    .stats-section {
-        background: #f8f9fa;
-        padding: 80px 0;
-    }
-    
-    .cta-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
-    }
-</style>
-{% endblock %}
-
 {% block unauthenticated_content %}
+<!-- Subscription Navbar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="{% url 'subscriptions:home' %}" class="text-2xl font-bold text-indigo-600">AttendanceHub</a>
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="{% url 'subscriptions:home' %}" class="text-indigo-600 px-3 py-2 text-sm font-medium border-b-2 border-indigo-600">Home</a>
+                <a href="{% url 'subscriptions:pricing' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
+                <a href="{% url 'login' %}" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Login</a>
+            </div>
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button type="button" class="mobile-menu-button text-gray-700 hover:text-indigo-600 focus:outline-none focus:text-indigo-600" aria-label="Toggle menu">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div class="mobile-menu hidden md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+                <a href="{% url 'subscriptions:home' %}" class="block px-3 py-2 text-base font-medium text-indigo-600 border-l-4 border-indigo-600 bg-indigo-50">Home</a>
+                <a href="{% url 'subscriptions:pricing' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Contact</a>
+                <a href="{% url 'login' %}" class="block px-3 py-2 text-base font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-md mx-3 mt-2">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Mobile menu toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.querySelector('.mobile-menu-button');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+});
+</script>
 <!-- Hero Section -->
-<section class="hero-section text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">Smart Employee Attendance Management</h1>
-                <p class="lead mb-5">Streamline your workforce management with location-based check-ins, real-time reporting, and comprehensive analytics. Perfect for businesses of all sizes.</p>
-                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                    <a href="{% url 'subscriptions:pricing' %}" class="btn btn-light btn-lg px-4">View Pricing</a>
-                    <a href="{% url 'subscriptions:contact' %}" class="btn btn-outline-light btn-lg px-4">Contact Sales</a>
-                </div>
+<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-24 text-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">Smart Employee Attendance Management</h1>
+            <p class="text-xl md:text-2xl mb-8 text-indigo-100">Streamline your workforce management with location-based check-ins, real-time reporting, and comprehensive analytics. Perfect for businesses of all sizes.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'subscriptions:pricing' %}" class="bg-white text-indigo-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition duration-300">View Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-semibold py-3 px-8 rounded-lg transition duration-300">Contact Sales</a>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-3">Why Choose AttendanceHub?</h2>
-                <p class="lead text-muted">Everything you need to manage employee attendance efficiently</p>
-            </div>
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gray-900">Why Choose AttendanceHub?</h2>
+            <p class="text-xl text-gray-600">Everything you need to manage employee attendance efficiently</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-map-marker-alt fa-3x text-primary"></i>
-                        </div>
-                        <h5 class="card-title">Location-Based Check-ins</h5>
-                        <p class="card-text">Ensure employees check in from designated locations with GPS validation and customizable radius settings.</p>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-map-marker-alt text-5xl text-blue-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Location-Based Check-ins</h5>
+                <p class="text-gray-600">Ensure employees check in from designated locations with GPS validation and customizable radius settings.</p>
             </div>
             
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-chart-line fa-3x text-success"></i>
-                        </div>
-                        <h5 class="card-title">Real-time Analytics</h5>
-                        <p class="card-text">Get instant insights into attendance patterns, late arrivals, and productivity metrics with interactive dashboards.</p>
-                    </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-chart-line text-5xl text-green-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Real-time Analytics</h5>
+                <p class="text-gray-600">Get instant insights into attendance patterns, late arrivals, and productivity metrics with interactive dashboards.</p>
             </div>
             
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-users fa-3x text-info"></i>
-                        </div>
-                        <h5 class="card-title">Multi-tenant Architecture</h5>
-                        <p class="card-text">Perfect for companies with multiple branches and departments. Manage everything from one central platform.</p>
-                    </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-users text-5xl text-cyan-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Multi-tenant Architecture</h5>
+                <p class="text-gray-600">Secure data isolation for multiple companies with role-based access control and customizable permissions.</p>
             </div>
             
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-mobile-alt fa-3x text-warning"></i>
-                        </div>
-                        <h5 class="card-title">Mobile-First Design</h5>
-                        <p class="card-text">Optimized for mobile devices. Employees can easily check in/out using their smartphones from anywhere.</p>
-                    </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-mobile-alt text-5xl text-purple-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Mobile Friendly</h5>
+                <p class="text-gray-600">Native mobile experience with offline capabilities and push notifications for seamless attendance tracking.</p>
             </div>
             
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-shield-alt fa-3x text-danger"></i>
-                        </div>
-                        <h5 class="card-title">Role-Based Access</h5>
-                        <p class="card-text">Secure access control with different permission levels for admins, HR managers, and employees.</p>
-                    </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-clock text-5xl text-red-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Flexible Scheduling</h5>
+                <p class="text-gray-600">Support for multiple shifts, overtime tracking, and custom work schedules with automated notifications.</p>
             </div>
             
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <i class="fas fa-download fa-3x text-secondary"></i>
-                        </div>
-                        <h5 class="card-title">Data Export</h5>
-                        <p class="card-text">Export attendance data in multiple formats for payroll integration and compliance reporting.</p>
-                    </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transform hover:-translate-y-2 transition duration-300 p-8 text-center">
+                <div class="mb-6">
+                    <i class="fas fa-download text-5xl text-gray-600"></i>
                 </div>
+                <h5 class="text-xl font-semibold mb-4 text-gray-900">Data Export</h5>
+                <p class="text-gray-600">Export attendance data in multiple formats for payroll integration and compliance reporting.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Stats Section -->
-<section class="stats-section">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="h2 fw-bold text-primary">10,000+</div>
-                <p class="text-muted">Active Users</p>
+<section class="bg-gray-50 py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            <div class="mb-8">
+                <div class="text-4xl font-bold text-blue-600 mb-2">10,000+</div>
+                <p class="text-gray-600">Active Users</p>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="h2 fw-bold text-success">500+</div>
-                <p class="text-muted">Companies</p>
+            <div class="mb-8">
+                <div class="text-4xl font-bold text-green-600 mb-2">500+</div>
+                <p class="text-gray-600">Companies</p>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="h2 fw-bold text-info">99.9%</div>
-                <p class="text-muted">Uptime</p>
+            <div class="mb-8">
+                <div class="text-4xl font-bold text-cyan-600 mb-2">99.9%</div>
+                <p class="text-gray-600">Uptime</p>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="h2 fw-bold text-warning">24/7</div>
-                <p class="text-muted">Support</p>
+            <div class="mb-8">
+                <div class="text-4xl font-bold text-yellow-600 mb-2">24/7</div>
+                <p class="text-gray-600">Support</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Pricing Preview Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-3">Simple, Transparent Pricing</h2>
-                <p class="lead text-muted">Choose the plan that fits your business needs</p>
-            </div>
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gray-900">Simple, Transparent Pricing</h2>
+            <p class="text-xl text-gray-600">Choose the plan that fits your business needs</p>
         </div>
         
-        <div class="row justify-content-center g-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {% for plan in plans %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card pricing-card h-100 {% if plan.is_featured %}featured{% endif %}">
-                    <div class="card-body text-center p-4">
-                        <h5 class="card-title text-uppercase fw-bold">{{ plan.name }}</h5>
-                        <div class="my-4">
-                            {% if plan.is_free %}
-                                <span class="display-4 fw-bold">Free</span>
-                            {% elif plan.is_enterprise %}
-                                <span class="display-4 fw-bold">Custom</span>
-                            {% else %}
-                                <span class="display-4 fw-bold">${{ plan.price }}</span>
-                                <span class="text-muted">/ {{ plan.billing_cycle|lower }}</span>
-                            {% endif %}
-                        </div>
-                        
-                        <ul class="list-unstyled mb-4">
-                            {% for feature in plan.get_feature_list %}
-                            <li class="mb-2">
-                                <i class="fas fa-check text-success me-2"></i>
-                                {{ feature }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        
-                        {% if plan.is_enterprise %}
-                            <a href="{% url 'subscriptions:contact' %}" class="btn btn-primary btn-lg w-100">Contact Us</a>
+            <div class="relative bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300 {% if plan.is_featured %}ring-2 ring-blue-600 scale-105{% endif %}">
+                {% if plan.is_featured %}
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold">Most Popular</span>
+                </div>
+                {% endif %}
+                <div class="p-8 text-center">
+                    <h5 class="text-xl font-bold uppercase mb-4 text-gray-900">{{ plan.name }}</h5>
+                    <div class="mb-6">
+                        {% if plan.is_free %}
+                            <span class="text-5xl font-bold text-gray-900">Free</span>
+                        {% elif plan.is_enterprise %}
+                            <span class="text-5xl font-bold text-gray-900">Custom</span>
                         {% else %}
-                            <a href="{% url 'subscriptions:subscribe' plan.id %}" class="btn btn-primary btn-lg w-100">
-                                {% if plan.is_free %}Get Started{% else %}Subscribe Now{% endif %}
-                            </a>
+                            <span class="text-5xl font-bold text-gray-900">${{ plan.price }}</span>
+                            <span class="text-gray-600">/ {{ plan.billing_cycle|lower }}</span>
                         {% endif %}
                     </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        {% for feature in plan.get_feature_list %}
+                        <li class="flex items-center justify-center">
+                            <i class="fas fa-check text-green-600 mr-3"></i>
+                            <span class="text-gray-700">{{ feature }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    {% if plan.is_enterprise %}
+                        <a href="{% url 'subscriptions:contact' %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block">Contact Us</a>
+                    {% else %}
+                        <a href="{% url 'subscriptions:subscribe' plan.id %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                            {% if plan.is_free %}Get Started{% else %}Subscribe Now{% endif %}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
         
-        <div class="text-center mt-4">
-            <a href="{% url 'subscriptions:pricing' %}" class="btn btn-outline-primary btn-lg">View Detailed Pricing</a>
+        <div class="text-center mt-12">
+            <a href="{% url 'subscriptions:pricing' %}" class="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-8 rounded-lg transition duration-300">View Detailed Pricing</a>
         </div>
     </div>
 </section>
 
 <!-- About Us Section -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h2 class="display-5 fw-bold mb-4">About AttendanceHub</h2>
-                <p class="lead mb-4">We're passionate about helping businesses streamline their workforce management through innovative technology.</p>
-                <p class="mb-4">Founded with the vision of making employee attendance tracking simple, accurate, and insightful, AttendanceHub serves companies of all sizes - from small startups to large enterprises.</p>
-                <p class="mb-4">Our platform combines cutting-edge location technology with intuitive design to provide a seamless experience for both employers and employees.</p>
-                <div class="d-flex gap-3">
-                    <div>
-                        <h5 class="fw-bold text-primary">Our Mission</h5>
-                        <p>To revolutionize workforce management with smart, location-aware attendance solutions.</p>
-                    </div>
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">About AttendanceHub</h2>
+                <p class="text-xl mb-6 text-gray-700">We're passionate about helping businesses streamline their workforce management through innovative technology.</p>
+                <p class="mb-6 text-gray-600">Founded with the vision of making employee attendance tracking simple, accurate, and insightful, AttendanceHub serves companies of all sizes - from small startups to large enterprises.</p>
+                <p class="mb-8 text-gray-600">Our platform combines cutting-edge location technology with intuitive design to provide a seamless experience for both employers and employees.</p>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h5 class="font-bold text-blue-600 text-lg mb-2">Our Mission</h5>
+                    <p class="text-gray-700">To revolutionize workforce management with smart, location-aware attendance solutions.</p>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="card text-center p-3">
-                            <i class="fas fa-rocket fa-2x text-primary mb-2"></i>
-                            <h6>Innovation</h6>
-                        </div>
+            <div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <i class="fas fa-rocket text-3xl text-blue-600 mb-4"></i>
+                        <h6 class="font-semibold text-gray-900">Innovation</h6>
                     </div>
-                    <div class="col-6">
-                        <div class="card text-center p-3">
-                            <i class="fas fa-handshake fa-2x text-success mb-2"></i>
-                            <h6>Reliability</h6>
-                        </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <i class="fas fa-handshake text-3xl text-green-600 mb-4"></i>
+                        <h6 class="font-semibold text-gray-900">Reliability</h6>
                     </div>
-                    <div class="col-6">
-                        <div class="card text-center p-3">
-                            <i class="fas fa-users fa-2x text-info mb-2"></i>
-                            <h6>Customer Focus</h6>
-                        </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <i class="fas fa-users text-3xl text-cyan-600 mb-4"></i>
+                        <h6 class="font-semibold text-gray-900">Customer Focus</h6>
                     </div>
-                    <div class="col-6">
-                        <div class="card text-center p-3">
-                            <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
-                            <h6>Growth</h6>
-                        </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <i class="fas fa-chart-line text-3xl text-yellow-600 mb-4"></i>
+                        <h6 class="font-semibold text-gray-900">Growth</h6>
                     </div>
                 </div>
             </div>
@@ -296,18 +244,54 @@
 </section>
 
 <!-- CTA Section -->
-<section class="cta-section text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h2 class="display-5 fw-bold mb-4">Ready to Transform Your Attendance Management?</h2>
-                <p class="lead mb-5">Join thousands of companies already using AttendanceHub to streamline their workforce management.</p>
-                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                    <a href="{% url 'subscriptions:pricing' %}" class="btn btn-light btn-lg px-4">Start Free Trial</a>
-                    <a href="{% url 'subscriptions:contact' %}" class="btn btn-outline-light btn-lg px-4">Schedule Demo</a>
-                </div>
+<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-20 text-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl md:text-5xl font-bold mb-6">Ready to Transform Your Attendance Management?</h2>
+            <p class="text-xl mb-8 text-indigo-100">Join thousands of companies already using AttendanceHub to streamline their workforce management.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'subscriptions:pricing' %}" class="bg-white text-indigo-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition duration-300">Start Free Trial</a>
+                <a href="{% url 'subscriptions:contact' %}" class="border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-semibold py-3 px-8 rounded-lg transition duration-300">Schedule Demo</a>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold text-white mb-4">AttendanceHub</h3>
+                <p class="text-gray-300 mb-4">Smart employee attendance management with location-based check-ins, real-time reporting, and comprehensive analytics.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Product</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:home' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                    <li><a href="{% url 'subscriptions:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">API</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:contact' %}" class="text-gray-300 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">© 2024 AttendanceHub. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 {% endblock %}

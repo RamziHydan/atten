@@ -3,95 +3,74 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .subscription-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 60px 0;
-    }
-    
-    .status-badge {
-        font-size: 0.9rem;
-        padding: 8px 16px;
-    }
-    
-    .subscription-card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .payment-history {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    
-    .upgrade-card {
-        border: 2px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .upgrade-card:hover {
-        border-color: #007bff;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<!-- Subscription Header -->
-<section class="subscription-header text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h1 class="display-5 fw-bold mb-3">Manage Subscription</h1>
-                <p class="lead mb-0">View and manage your current subscription plan</p>
+{% block unauthenticated_content %}
+<!-- Subscription Navbar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="{% url 'subscriptions:home' %}" class="text-2xl font-bold text-indigo-600">AttendanceHub</a>
             </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="{% url 'subscriptions:home' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</a>
+                <a href="{% url 'subscriptions:pricing' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
+                <a href="{% url 'login' %}" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+<!-- Subscription Header -->
+<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-16 text-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4">Manage Subscription</h1>
+            <p class="text-xl text-indigo-100">View and manage your current subscription plan</p>
         </div>
     </div>
 </section>
 
-<section class="py-5">
-    <div class="container">
+<section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% if subscription %}
-        <div class="row">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Current Subscription -->
-            <div class="col-lg-8">
-                <div class="subscription-card card mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg mb-8">
+                    <div class="p-8">
+                        <div class="flex justify-between items-start mb-6">
                             <div>
-                                <h4 class="fw-bold mb-1">{{ subscription.plan.name }}</h4>
-                                <p class="text-muted mb-0">{{ subscription.plan.description|truncatewords:15 }}</p>
+                                <h4 class="text-2xl font-bold mb-2 text-gray-900">{{ subscription.plan.name }}</h4>
+                                <p class="text-gray-600">{{ subscription.plan.description|truncatewords:15 }}</p>
                             </div>
-                            <div class="text-end">
+                            <div>
                                 {% if subscription.status == 'ACTIVE' %}
-                                    <span class="badge bg-success status-badge">Active</span>
+                                    <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-semibold">Active</span>
                                 {% elif subscription.status == 'TRIAL' %}
-                                    <span class="badge bg-info status-badge">Trial</span>
+                                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">Trial</span>
                                 {% elif subscription.status == 'PENDING' %}
-                                    <span class="badge bg-warning status-badge">Pending</span>
+                                    <span class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-semibold">Pending</span>
                                 {% elif subscription.status == 'EXPIRED' %}
-                                    <span class="badge bg-danger status-badge">Expired</span>
+                                    <span class="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-semibold">Expired</span>
                                 {% else %}
-                                    <span class="badge bg-secondary status-badge">{{ subscription.status }}</span>
+                                    <span class="bg-gray-100 text-gray-800 px-4 py-2 rounded-full text-sm font-semibold">{{ subscription.status }}</span>
                                 {% endif %}
                             </div>
                         </div>
                         
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <h6 class="text-muted mb-2">Pricing</h6>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h6 class="text-gray-500 text-sm font-medium mb-2">Pricing</h6>
                                 {% if subscription.plan.is_free %}
-                                    <div class="h5 fw-bold text-success">Free</div>
+                                    <div class="text-2xl font-bold text-green-600">Free</div>
                                 {% elif subscription.plan.is_enterprise %}
-                                    <div class="h5 fw-bold text-primary">Custom</div>
+                                    <div class="text-2xl font-bold text-blue-600">Custom</div>
                                 {% else %}
-                                    <div class="h5 fw-bold">${{ subscription.plan.price }}/{{ subscription.plan.billing_cycle|lower }}</div>
+                                    <div class="text-2xl font-bold text-gray-900">${{ subscription.plan.price }}/{{ subscription.plan.billing_cycle|lower }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-6">
-                                <h6 class="text-muted mb-2">
+                            <div>
+                                <h6 class="text-gray-500 text-sm font-medium mb-2">
                                     {% if subscription.end_date %}
                                         {% if subscription.status == 'TRIAL' %}
                                             Trial Ends
@@ -103,12 +82,12 @@
                                     {% endif %}
                                 </h6>
                                 {% if subscription.end_date %}
-                                    <div class="h6">{{ subscription.end_date|date:"M d, Y" }}</div>
+                                    <div class="text-lg font-semibold text-gray-900">{{ subscription.end_date|date:"M d, Y" }}</div>
                                     {% if subscription.days_remaining %}
-                                        <small class="text-muted">{{ subscription.days_remaining }} days remaining</small>
+                                        <small class="text-gray-500">{{ subscription.days_remaining }} days remaining</small>
                                     {% endif %}
                                 {% else %}
-                                    <div class="h6 text-success">No expiry</div>
+                                    <div class="text-lg font-semibold text-green-600">No expiry</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -297,4 +276,42 @@
         </div>
     </div>
 </div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold text-white mb-4">AttendanceHub</h3>
+                <p class="text-gray-300 mb-4">Smart employee attendance management with location-based check-ins, real-time reporting, and comprehensive analytics.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Product</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:home' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                    <li><a href="{% url 'subscriptions:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">API</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:contact' %}" class="text-gray-300 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">© 2024 AttendanceHub. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 {% endblock %}

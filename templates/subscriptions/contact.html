@@ -3,76 +3,58 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .contact-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
-    }
-    
-    .contact-form {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    }
-    
-    .contact-info {
-        background: #f8f9fa;
-        border-radius: 15px;
-    }
-    
-    .contact-item {
-        padding: 20px;
-        text-align: center;
-        border-radius: 10px;
-        transition: transform 0.3s ease;
-    }
-    
-    .contact-item:hover {
-        transform: translateY(-5px);
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<!-- Contact Header -->
-<section class="contact-header text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">Contact Our Sales Team</h1>
-                <p class="lead mb-0">Ready for Enterprise? Let's discuss your custom requirements and get you the perfect solution.</p>
+{% block unauthenticated_content %}
+<!-- Subscription Navbar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="{% url 'subscriptions:home' %}" class="text-2xl font-bold text-indigo-600">AttendanceHub</a>
             </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="{% url 'subscriptions:home' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</a>
+                <a href="{% url 'subscriptions:pricing' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="text-indigo-600 px-3 py-2 text-sm font-medium border-b-2 border-indigo-600">Contact</a>
+                <a href="{% url 'login' %}" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+<!-- Contact Header -->
+<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-20 text-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">Contact Our Sales Team</h1>
+            <p class="text-xl md:text-2xl text-indigo-100">Ready for Enterprise? Let's discuss your custom requirements and get you the perfect solution.</p>
         </div>
     </div>
 </section>
 
-<section class="py-5">
-    <div class="container">
-        <div class="row g-5">
+<section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <!-- Contact Form -->
-            <div class="col-lg-8">
-                <div class="contact-form p-5">
-                    <h3 class="mb-4">Get in Touch</h3>
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-900">Get in Touch</h3>
                     <form method="post">
                         {% csrf_token %}
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Full Name *</label>
-                                <input type="text" class="form-control" name="name" required>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="name" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Email Address *</label>
-                                <input type="email" class="form-control" name="email" required>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                                <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="email" required>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Company Name *</label>
-                                <input type="text" class="form-control" name="company" required>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="company" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Company Size</label>
-                                <select class="form-select" name="company_size">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Company Size</label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="company_size">
                                     <option value="">Select size</option>
                                     <option value="1-10">1-10 employees</option>
                                     <option value="11-50">11-50 employees</option>
@@ -81,25 +63,25 @@
                                     <option value="500+">500+ employees</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" name="phone">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="phone">
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">How can we help you? *</label>
-                                <textarea class="form-control" name="message" rows="5" required placeholder="Tell us about your requirements, current challenges, or any specific features you need..."></textarea>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">How can we help you? *</label>
+                                <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="message" rows="5" required placeholder="Tell us about your requirements, current challenges, or any specific features you need..."></textarea>
                             </div>
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="newsletter">
-                                    <label class="form-check-label" for="newsletter">
+                            <div class="md:col-span-2">
+                                <div class="flex items-center">
+                                    <input class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" type="checkbox" id="newsletter">
+                                    <label class="ml-3 text-sm text-gray-700" for="newsletter">
                                         I'd like to receive updates about new features and product news
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary btn-lg px-4">
-                                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                            <div class="md:col-span-2">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300">
+                                    <i class="fas fa-paper-plane mr-2"></i>Send Message
                                 </button>
                             </div>
                         </div>
@@ -108,44 +90,44 @@
             </div>
             
             <!-- Contact Info -->
-            <div class="col-lg-4">
-                <div class="contact-info p-4 h-100">
-                    <h4 class="mb-4">Why Choose Enterprise?</h4>
+            <div>
+                <div class="bg-gray-50 rounded-xl p-8 h-full">
+                    <h4 class="text-xl font-bold mb-6 text-gray-900">Why Choose Enterprise?</h4>
                     
-                    <div class="mb-4">
-                        <div class="contact-item bg-white mb-3">
-                            <i class="fas fa-infinity fa-2x text-primary mb-3"></i>
-                            <h6 class="fw-bold">Unlimited Everything</h6>
-                            <p class="text-muted small mb-0">No limits on employees, branches, or attendance groups</p>
+                    <div class="space-y-4 mb-8">
+                        <div class="bg-white rounded-lg p-6 text-center transform hover:-translate-y-1 transition duration-300">
+                            <i class="fas fa-infinity text-3xl text-blue-600 mb-4"></i>
+                            <h6 class="font-semibold text-gray-900 mb-2">Unlimited Everything</h6>
+                            <p class="text-gray-600 text-sm">No limits on employees, branches, or attendance groups</p>
                         </div>
                         
-                        <div class="contact-item bg-white mb-3">
-                            <i class="fas fa-headset fa-2x text-success mb-3"></i>
-                            <h6 class="fw-bold">Dedicated Support</h6>
-                            <p class="text-muted small mb-0">24/7 priority support with dedicated account manager</p>
+                        <div class="bg-white rounded-lg p-6 text-center transform hover:-translate-y-1 transition duration-300">
+                            <i class="fas fa-headset text-3xl text-green-600 mb-4"></i>
+                            <h6 class="font-semibold text-gray-900 mb-2">Dedicated Support</h6>
+                            <p class="text-gray-600 text-sm">24/7 priority support with dedicated account manager</p>
                         </div>
                         
-                        <div class="contact-item bg-white mb-3">
-                            <i class="fas fa-cogs fa-2x text-info mb-3"></i>
-                            <h6 class="fw-bold">Custom Features</h6>
-                            <p class="text-muted small mb-0">Tailored solutions to meet your specific business needs</p>
+                        <div class="bg-white rounded-lg p-6 text-center transform hover:-translate-y-1 transition duration-300">
+                            <i class="fas fa-cogs text-3xl text-cyan-600 mb-4"></i>
+                            <h6 class="font-semibold text-gray-900 mb-2">Custom Features</h6>
+                            <p class="text-gray-600 text-sm">Tailored solutions to meet your specific business needs</p>
                         </div>
                         
-                        <div class="contact-item bg-white mb-3">
-                            <i class="fas fa-shield-alt fa-2x text-warning mb-3"></i>
-                            <h6 class="fw-bold">Enterprise Security</h6>
-                            <p class="text-muted small mb-0">Advanced security features and compliance support</p>
+                        <div class="bg-white rounded-lg p-6 text-center transform hover:-translate-y-1 transition duration-300">
+                            <i class="fas fa-shield-alt text-3xl text-yellow-600 mb-4"></i>
+                            <h6 class="font-semibold text-gray-900 mb-2">Enterprise Security</h6>
+                            <p class="text-gray-600 text-sm">Advanced security features and compliance support</p>
                         </div>
                     </div>
                     
                     <div class="text-center">
-                        <h6 class="mb-3">Need immediate assistance?</h6>
-                        <div class="d-grid gap-2">
-                            <a href="tel:+1234567890" class="btn btn-outline-primary">
-                                <i class="fas fa-phone me-2"></i>Call Sales
+                        <h6 class="font-semibold mb-4 text-gray-900">Need immediate assistance?</h6>
+                        <div class="space-y-3">
+                            <a href="tel:+1234567890" class="block w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition duration-300">
+                                <i class="fas fa-phone mr-2"></i>Call Sales
                             </a>
-                            <a href="mailto:sales@attendancehub.com" class="btn btn-outline-secondary">
-                                <i class="fas fa-envelope me-2"></i>Email Us
+                            <a href="mailto:sales@attendancehub.com" class="block w-full border-2 border-gray-400 text-gray-600 hover:bg-gray-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition duration-300">
+                                <i class="fas fa-envelope mr-2"></i>Email Us
                             </a>
                         </div>
                     </div>
@@ -156,67 +138,99 @@
 </section>
 
 <!-- FAQ Section -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-900">Frequently Asked Questions</h2>
+            
+            <div class="space-y-4">
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="w-full px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 rounded-lg transition duration-300" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        How quickly can we get started with Enterprise?
+                        <i class="fas fa-chevron-down float-right mt-1"></i>
+                    </button>
+                    <div id="faq1" class="collapse show px-6 pb-4">
+                        <p class="text-gray-600">
+                            Most Enterprise implementations can be completed within 1-2 weeks, depending on your specific requirements and integrations needed.
+                        </p>
+                    </div>
+                </div>
                 
-                <div class="accordion" id="contactFaq">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                How quickly can we get started with Enterprise?
-                            </button>
-                        </h2>
-                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#contactFaq">
-                            <div class="accordion-body">
-                                Most Enterprise implementations can be completed within 1-2 weeks, depending on your specific requirements and integrations needed.
-                            </div>
-                        </div>
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="w-full px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 rounded-lg transition duration-300" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Do you offer data migration services?
+                        <i class="fas fa-chevron-down float-right mt-1"></i>
+                    </button>
+                    <div id="faq2" class="collapse px-6 pb-4">
+                        <p class="text-gray-600">
+                            Yes! Our team will help migrate your existing attendance data from other systems at no additional cost for Enterprise customers.
+                        </p>
                     </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                Do you offer data migration services?
-                            </button>
-                        </h2>
-                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#contactFaq">
-                            <div class="accordion-body">
-                                Yes! Our team will help migrate your existing attendance data from other systems at no additional cost for Enterprise customers.
-                            </div>
-                        </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="w-full px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 rounded-lg transition duration-300" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        Can you integrate with our existing HR systems?
+                        <i class="fas fa-chevron-down float-right mt-1"></i>
+                    </button>
+                    <div id="faq3" class="collapse px-6 pb-4">
+                        <p class="text-gray-600">
+                            Absolutely! We offer custom integrations with popular HR systems, payroll software, and can develop API connections for your specific tools.
+                        </p>
                     </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                Can you integrate with our existing HR systems?
-                            </button>
-                        </h2>
-                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#contactFaq">
-                            <div class="accordion-body">
-                                Absolutely! We offer custom integrations with popular HR systems, payroll software, and can develop API connections for your specific tools.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                What kind of support do Enterprise customers get?
-                            </button>
-                        </h2>
-                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#contactFaq">
-                            <div class="accordion-body">
-                                Enterprise customers receive 24/7 priority support, a dedicated account manager, regular check-ins, and direct access to our development team for feature requests.
-                            </div>
-                        </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="w-full px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 rounded-lg transition duration-300" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                        What kind of support do Enterprise customers get?
+                        <i class="fas fa-chevron-down float-right mt-1"></i>
+                    </button>
+                    <div id="faq4" class="collapse px-6 pb-4">
+                        <p class="text-gray-600">
+                            Enterprise customers receive 24/7 priority support, a dedicated account manager, regular check-ins, and direct access to our development team for feature requests.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold text-white mb-4">AttendanceHub</h3>
+                <p class="text-gray-300 mb-4">Smart employee attendance management with location-based check-ins, real-time reporting, and comprehensive analytics.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Product</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:home' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                    <li><a href="{% url 'subscriptions:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">API</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:contact' %}" class="text-gray-300 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">© 2024 AttendanceHub. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 {% endblock %}

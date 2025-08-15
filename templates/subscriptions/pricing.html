@@ -3,377 +3,166 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .pricing-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
-    }
-    
-    .pricing-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 2px solid #e9ecef;
-        position: relative;
-        height: 100%;
-    }
-    
-    .pricing-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-    
-    .pricing-card.featured {
-        border-color: #007bff;
-        transform: scale(1.05);
-        box-shadow: 0 15px 35px rgba(0, 123, 255, 0.1);
-    }
-    
-    .pricing-card.featured::before {
-        content: "Most Popular";
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #007bff;
-        color: white;
-        padding: 8px 24px;
-        border-radius: 25px;
-        font-size: 0.85rem;
-        font-weight: bold;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-    }
-    
-    .feature-list {
-        min-height: 300px;
-    }
-    
-    .comparison-table {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .faq-section {
-        background: #f8f9fa;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<!-- Pricing Header -->
-<section class="pricing-header text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">Choose Your Plan</h1>
-                <p class="lead mb-0">Flexible pricing that grows with your business. Start free, upgrade anytime.</p>
+{% block unauthenticated_content %}
+<!-- Subscription Navbar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="{% url 'subscriptions:home' %}" class="text-2xl font-bold text-indigo-600">AttendanceHub</a>
             </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="{% url 'subscriptions:home' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</a>
+                <a href="{% url 'subscriptions:pricing' %}" class="text-indigo-600 px-3 py-2 text-sm font-medium border-b-2 border-indigo-600">Pricing</a>
+                <a href="{% url 'subscriptions:contact' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
+                <a href="{% url 'login' %}" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Pricing Header -->
+<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-20 text-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">Choose Your Plan</h1>
+            <p class="text-xl md:text-2xl text-indigo-100">Flexible pricing that grows with your business. Start free, upgrade anytime.</p>
         </div>
     </div>
 </section>
 
 <!-- Pricing Cards -->
-<section class="py-5">
-    <div class="container">
-        <div class="row justify-content-center g-4">
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {% for plan in plans %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card pricing-card {% if plan.is_featured %}featured{% endif %}">
-                    <div class="card-body text-center p-4">
-                        <h3 class="card-title text-uppercase fw-bold mb-3">{{ plan.name }}</h3>
-                        
-                        <div class="mb-4">
-                            {% if plan.is_free %}
-                                <div class="display-3 fw-bold text-success">Free</div>
-                                <small class="text-muted">Forever</small>
-                            {% elif plan.is_enterprise %}
-                                <div class="display-3 fw-bold text-primary">Custom</div>
-                                <small class="text-muted">Contact us for pricing</small>
-                            {% else %}
-                                <div class="display-3 fw-bold text-primary">${{ plan.price }}</div>
-                                <small class="text-muted">per {{ plan.billing_cycle|lower }}</small>
-                            {% endif %}
-                        </div>
-                        
-                        <p class="text-muted mb-4">{{ plan.description|truncatewords:15 }}</p>
-                        
-                        <div class="feature-list text-start mb-4">
-                            <h6 class="fw-bold mb-3">What's included:</h6>
-                            <ul class="list-unstyled">
-                                {% for feature in plan.get_feature_list %}
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ feature }}
-                                </li>
-                                {% endfor %}
-                                
-                                {% if plan.has_advanced_reporting %}
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    Advanced reporting & analytics
-                                </li>
+            <div class="relative bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300 {% if plan.is_featured %}ring-2 ring-blue-600 scale-105{% endif %}">
+                {% if plan.is_featured %}
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">Most Popular</span>
+                </div>
+                {% endif %}
+                <div class="p-8 text-center h-full flex flex-col">
+                    <h3 class="text-xl font-bold uppercase mb-4 text-gray-900">{{ plan.name }}</h3>
+                    
+                    <div class="mb-6">
+                        {% if plan.is_free %}
+                            <div class="text-5xl font-bold text-green-600">Free</div>
+                            <small class="text-gray-500">Forever</small>
+                        {% else %}
+                            <div class="text-5xl font-bold text-gray-900">${{ plan.price }}</div>
+                            <small class="text-gray-500">per {{ plan.billing_cycle }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <ul class="text-left space-y-3 mb-8 flex-grow">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">
+                                {% if plan.max_employees == -1 %}
+                                    Unlimited employees
+                                {% else %}
+                                    Up to {{ plan.max_employees }} employees
                                 {% endif %}
-                                
-                                {% if plan.has_api_access %}
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    API access for integrations
-                                </li>
+                            </span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">
+                                {% if plan.max_branches == -1 %}
+                                    Unlimited branches
+                                {% else %}
+                                    Up to {{ plan.max_branches }} branches
                                 {% endif %}
-                                
-                                {% if plan.has_custom_branding %}
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    Custom branding
-                                </li>
-                                {% endif %}
-                                
-                                {% if plan.has_priority_support %}
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    Priority support
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                        
-                        <div class="mt-auto">
-                            {% if plan.is_enterprise %}
-                                <a href="{% url 'subscriptions:contact' %}" class="btn btn-primary btn-lg w-100 mb-3">
-                                    Contact Sales
-                                </a>
-                                <small class="text-muted">Custom features & pricing</small>
-                            {% elif plan.is_free %}
-                                <a href="{% url 'subscriptions:subscribe' plan.id %}" class="btn btn-success btn-lg w-100 mb-3">
-                                    Get Started Free
-                                </a>
-                                <small class="text-muted">No credit card required</small>
-                            {% else %}
-                                <a href="{% url 'subscriptions:subscribe' plan.id %}" class="btn btn-primary btn-lg w-100 mb-3">
-                                    Start {{ plan.billing_cycle|title }} Plan
-                                </a>
-                                <small class="text-muted">14-day free trial</small>
-                            {% endif %}
-                        </div>
+                            </span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">Location-based check-ins</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">Real-time reporting</span>
+                        </li>
+                        {% if plan.has_advanced_reports %}
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">Advanced analytics</span>
+                        </li>
+                        {% endif %}
+                        {% if plan.has_api_access %}
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">API access</span>
+                        </li>
+                        {% endif %}
+                        {% if plan.has_priority_support %}
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">Priority support</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <div class="mt-auto">
+                        {% if plan.is_free %}
+                            <a href="{% url 'subscriptions:subscribe' plan.id %}" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                                Get Started Free
+                            </a>
+                        {% else %}
+                            <a href="{% url 'subscriptions:subscribe' plan.id %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block mb-3">
+                                Start {{ plan.billing_cycle|title }} Plan
+                            </a>
+                            <small class="text-gray-500">14-day free trial</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-    </div>
-</section>
-
-<!-- Feature Comparison Table -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="text-center mb-5">Detailed Feature Comparison</h2>
-                <div class="comparison-table p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th scope="col">Features</th>
-                                    {% for plan in plans %}
-                                    <th scope="col" class="text-center">{{ plan.name }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Employees</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.max_employees == 0 %}
-                                            <i class="fas fa-infinity text-success"></i> Unlimited
-                                        {% else %}
-                                            {{ plan.max_employees }}
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Branches</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.max_branches == 0 %}
-                                            <i class="fas fa-infinity text-success"></i> Unlimited
-                                        {% else %}
-                                            {{ plan.max_branches }}
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Attendance Groups</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.max_attendance_groups == 0 %}
-                                            <i class="fas fa-infinity text-success"></i> Unlimited
-                                        {% else %}
-                                            {{ plan.max_attendance_groups }}
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Basic Reporting</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        <i class="fas fa-check text-success"></i>
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Advanced Analytics</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.has_advanced_reporting %}
-                                            <i class="fas fa-check text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-times text-muted"></i>
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>API Access</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.has_api_access %}
-                                            <i class="fas fa-check text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-times text-muted"></i>
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Custom Branding</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.has_custom_branding %}
-                                            <i class="fas fa-check text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-times text-muted"></i>
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td><strong>Support</strong></td>
-                                    {% for plan in plans %}
-                                    <td class="text-center">
-                                        {% if plan.has_priority_support %}
-                                            <span class="badge bg-success">Priority</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Standard</span>
-                                        {% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        
+        <div class="text-center mt-12">
+            <p class="text-gray-600 mb-6">All plans include 14-day free trial • No setup fees • Cancel anytime</p>
+            <a href="{% url 'subscriptions:contact' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">Need a custom solution? Contact our sales team →</a>
         </div>
     </div>
 </section>
 
-<!-- FAQ Section -->
-<section class="faq-section py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h2 class="text-center mb-5">Frequently Asked Questions</h2>
-                
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="faq1">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
-                                Can I change my plan anytime?
-                            </button>
-                        </h2>
-                        <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing differences.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="faq2">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
-                                Is there a free trial?
-                            </button>
-                        </h2>
-                        <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! All paid plans come with a 14-day free trial. No credit card required to start. The Free plan is available forever with basic features.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="faq3">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
-                                What payment methods do you accept?
-                            </button>
-                        </h2>
-                        <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                We accept various payment methods including credit cards, bank transfers, PayPal, and other flexible options. All payments are processed securely.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="faq4">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
-                                Is my data secure?
-                            </button>
-                        </h2>
-                        <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Absolutely! We use enterprise-grade security measures including SSL encryption, secure data centers, and regular security audits to protect your data.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="faq5">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
-                                Do you offer custom enterprise solutions?
-                            </button>
-                        </h2>
-                        <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! Our Enterprise plan includes custom features, dedicated support, and tailored solutions for large organizations. Contact our sales team to discuss your specific needs.
-                            </div>
-                        </div>
-                    </div>
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold text-white mb-4">AttendanceHub</h3>
+                <p class="text-gray-300 mb-4">Smart employee attendance management with location-based check-ins, real-time reporting, and comprehensive analytics.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- CTA Section -->
-<section class="py-5 bg-primary text-white text-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h2 class="mb-4">Ready to Get Started?</h2>
-                <p class="lead mb-4">Join thousands of companies using AttendanceHub to streamline their workforce management.</p>
-                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                    <a href="{% url 'subscriptions:subscribe' plans.0.id %}" class="btn btn-light btn-lg px-4">Start Free</a>
-                    <a href="{% url 'subscriptions:contact' %}" class="btn btn-outline-light btn-lg px-4">Contact Sales</a>
-                </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Product</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:home' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                    <li><a href="{% url 'subscriptions:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">API</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:contact' %}" class="text-gray-300 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                </ul>
             </div>
         </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">© 2024 AttendanceHub. All rights reserved.</p>
+        </div>
     </div>
-</section>
+</footer>
 {% endblock %}
