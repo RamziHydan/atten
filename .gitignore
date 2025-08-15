@@ -44,6 +44,7 @@ htmlcov/
 # --- System Files ---
 # Mac
 .DS_Store
-
+db.sqlite3
+db.sqlite3-journal
 # Windows
 Thumbs.db
