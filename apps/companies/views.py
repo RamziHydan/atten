@@ -99,7 +99,7 @@ def company_register(request):
                 # Log the user in
                 login(request, owner)
                 
-                messages.success(request, f'Welcome to AttendanceHub! Your company "{company_name}" has been registered successfully.')
+                messages.success(request, f'Welcome to 7hader! Your company "{company_name}" has been registered successfully.')
                 return redirect('dashboard:dashboard')
                 
         except Exception as e:

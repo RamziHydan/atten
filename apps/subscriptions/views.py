@@ -21,7 +21,7 @@ def home(request):
     
     context = {
         'plans': plans,
-        'title': 'AttendanceHub - Smart Employee Attendance Management',
+        'title': '7hader - Smart Employee Attendance Management',
     }
     return render(request, 'subscriptions/home.html', context)
 
@@ -90,7 +90,7 @@ def pricing(request):
     
     context = {
         'plans': plans,
-        'title': 'Pricing Plans - AttendanceHub',
+        'title': 'Pricing Plans - 7hader',
     }
     return render(request, 'subscriptions/pricing.html', context)
 
@@ -552,6 +552,6 @@ def contact(request):
         return redirect('subscriptions:contact')
     
     context = {
-        'title': 'Contact Us - AttendanceHub',
+        'title': 'Contact Us - 7hader',
     }
     return render(request, 'subscriptions/contact.html', context)
