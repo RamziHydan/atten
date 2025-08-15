@@ -200,7 +200,7 @@ class Command(BaseCommand):
             requires_approval=True,
             config_fields={
                 'required_fields': ['payment_details'],
-                'contact_info': 'support@attendancehub.com'
+                'contact_info': 'support@7hader.com'
             },
             sort_order=6
         )

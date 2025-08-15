@@ -51,7 +51,7 @@ class Command(BaseCommand):
         """Create the Super Admin user"""
         super_admin = User.objects.create_user(
             username='superadmin',
-            email='superadmin@attendancehub.com',
+            email='superadmin@7hader.com',
             password='admin123',
             first_name='Super',
             last_name='Admin',
