@@ -102,45 +102,80 @@ def subscribe(request, plan_id):
     """
     try:
         plan = get_object_or_404(SubscriptionPlan, id=plan_id, is_active=True)
-    except:
-        # If plan doesn't exist in DB, create static demo plan
-        static_plans = {
-            '1': type('Plan', (), {
-                'id': 1,
-                'name': 'Free Plan',
-                'price': 0,
-                'billing_cycle': 'monthly',
-                'max_employees': 10,
-                'description': 'Perfect for small teams getting started',
-                'is_free': True,
-                'is_enterprise': False,
-                'get_feature_list': lambda: ['Up to 10 employees', 'Up to 1 branch', 'Basic reporting', 'Data export']
-            })(),
-            '2': type('Plan', (), {
-                'id': 2,
-                'name': 'Professional Plan',
-                'price': 29.99,
-                'billing_cycle': 'monthly',
-                'max_employees': 0,
-                'description': 'Advanced features for growing businesses',
-                'is_free': False,
-                'is_enterprise': False,
-                'get_feature_list': lambda: ['Unlimited employees', 'Up to 5 branches', 'Advanced reporting', 'API access', 'Priority support']
-            })(),
-            '3': type('Plan', (), {
-                'id': 3,
-                'name': 'Enterprise Plan',
-                'price': 99.99,
-                'billing_cycle': 'monthly',
-                'max_employees': 0,
-                'description': 'Complete solution for large organizations',
-                'is_free': False,
-                'is_enterprise': True,
-                'get_feature_list': lambda: ['Unlimited everything', 'Custom branding', 'Dedicated support', 'API access', 'Advanced analytics']
-            })()
-        }
-        plan = static_plans.get(str(plan_id))
-        if not plan:
+    except SubscriptionPlan.DoesNotExist:
+        # Create actual subscription plans if they don't exist
+        from django.db import transaction
+        with transaction.atomic():
+            # Free Plan
+            free_plan, created = SubscriptionPlan.objects.get_or_create(
+                plan_type='FREE',
+                defaults={
+                    'name': 'Free Plan',
+                    'description': 'Perfect for small teams getting started',
+                    'price': 0.00,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 10,
+                    'max_branches': 1,
+                    'max_attendance_groups': 3,
+                    'has_advanced_reporting': False,
+                    'has_api_access': False,
+                    'has_custom_branding': False,
+                    'has_priority_support': False,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': False,
+                    'sort_order': 1,
+                }
+            )
+            
+            # Professional Plan
+            pro_plan, created = SubscriptionPlan.objects.get_or_create(
+                plan_type='PROFESSIONAL',
+                defaults={
+                    'name': 'Professional Plan',
+                    'description': 'Advanced features for growing businesses',
+                    'price': 29.99,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 0,
+                    'max_branches': 5,
+                    'max_attendance_groups': 0,
+                    'has_advanced_reporting': True,
+                    'has_api_access': True,
+                    'has_custom_branding': False,
+                    'has_priority_support': True,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': True,
+                    'sort_order': 2,
+                }
+            )
+            
+            # Enterprise Plan
+            enterprise_plan, created = SubscriptionPlan.objects.get_or_create(
+                plan_type='ENTERPRISE',
+                defaults={
+                    'name': 'Enterprise Plan',
+                    'description': 'Complete solution for large organizations',
+                    'price': 99.99,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 0,
+                    'max_branches': 0,
+                    'max_attendance_groups': 0,
+                    'has_advanced_reporting': True,
+                    'has_api_access': True,
+                    'has_custom_branding': True,
+                    'has_priority_support': True,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': False,
+                    'sort_order': 3,
+                }
+            )
+        
+        # Try to get the plan again
+        try:
+            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
             messages.error(request, 'Invalid subscription plan.')
             return redirect('subscriptions:pricing')
     
@@ -187,28 +222,29 @@ def subscribe(request, plan_id):
     # For paid plans, show payment form
     payment_methods = PaymentMethod.objects.filter(is_active=True).order_by('sort_order')
     
-    # If no payment methods exist, create static demo methods
+    # If no payment methods exist, create them in database
     if not payment_methods.exists():
-        payment_methods = [
-            type('PaymentMethod', (), {
-                'id': 1,
-                'name': 'Credit Card',
-                'payment_type': 'CREDIT_CARD',
-                'description': 'Pay securely with your credit or debit card'
-            })(),
-            type('PaymentMethod', (), {
-                'id': 2,
-                'name': 'Bank Transfer',
-                'payment_type': 'BANK_TRANSFER',
-                'description': 'Transfer funds directly from your bank account'
-            })(),
-            type('PaymentMethod', (), {
-                'id': 3,
-                'name': 'PayPal',
-                'payment_type': 'PAYPAL',
-                'description': 'Pay with your PayPal account'
-            })()
+        payment_methods_data = [
+            {'id': 1, 'name': 'Credit Card', 'payment_type': 'CREDIT_CARD', 'description': 'Pay securely with your credit or debit card'},
+            {'id': 2, 'name': 'Bank Transfer', 'payment_type': 'BANK_TRANSFER', 'description': 'Transfer funds directly from your bank account'},
+            {'id': 3, 'name': 'PayPal', 'payment_type': 'PAYPAL', 'description': 'Pay with your PayPal account'},
         ]
+        
+        for pm_data in payment_methods_data:
+            PaymentMethod.objects.get_or_create(
+                id=pm_data['id'],
+                defaults={
+                    'name': pm_data['name'],
+                    'payment_type': pm_data['payment_type'],
+                    'description': pm_data['description'],
+                    'is_active': True,
+                    'requires_approval': False,
+                    'sort_order': pm_data['id']
+                }
+            )
+        
+        # Refresh the queryset
+        payment_methods = PaymentMethod.objects.filter(is_active=True).order_by('sort_order')
     
     context = {
         'plan': plan,
@@ -231,7 +267,28 @@ def process_payment(request):
         
         # Get plan and payment method
         plan = get_object_or_404(SubscriptionPlan, id=plan_id, is_active=True)
-        payment_method = get_object_or_404(PaymentMethod, id=payment_method_id, is_active=True)
+        
+        # Create payment methods if they don't exist
+        payment_methods_data = [
+            {'id': 1, 'name': 'Credit Card', 'payment_type': 'CREDIT_CARD'},
+            {'id': 2, 'name': 'Bank Transfer', 'payment_type': 'BANK_TRANSFER'},
+            {'id': 3, 'name': 'PayPal', 'payment_type': 'PAYPAL'},
+        ]
+        
+        for pm_data in payment_methods_data:
+            PaymentMethod.objects.get_or_create(
+                id=pm_data['id'],
+                defaults={
+                    'name': pm_data['name'],
+                    'payment_type': pm_data['payment_type'],
+                    'description': f'{pm_data["name"]} payment method',
+                    'is_active': True,
+                    'requires_approval': False,
+                    'sort_order': pm_data['id']
+                }
+            )
+        
+        payment_method = PaymentMethod.objects.get(id=payment_method_id)
         
         # Collect payment details from form
         for key, value in request.POST.items():
@@ -244,14 +301,15 @@ def process_payment(request):
             company=request.user.company,
             defaults={
                 'plan': plan,
-                'status': 'PENDING',
+                'status': 'ACTIVE',  # Set to ACTIVE for immediate activation
                 'start_date': timezone.now(),
             }
         )
         
         if not created:
             subscription.plan = plan
-            subscription.status = 'PENDING'
+            subscription.status = 'ACTIVE'  # Set to ACTIVE for immediate activation
+            subscription.start_date = timezone.now()
             subscription.save()
         
         # Create payment record
@@ -260,19 +318,20 @@ def process_payment(request):
             payment_method=payment_method,
             amount=plan.price,
             payment_details=payment_details,
-            status='PENDING'
+            status='APPROVED'  # Set to APPROVED for immediate activation
         )
+        
         
         # For enterprise plans, send notification
         if plan.is_enterprise:
             messages.success(request, 
                 'Thank you for your interest in our Enterprise plan! '
-                'Our team will contact you shortly to discuss your requirements.'
+                'Your subscription has been activated.'
             )
         else:
             messages.success(request, 
-                f'Payment submitted successfully! Your subscription will be activated '
-                f'once payment is verified. Reference: #{payment.id}'
+                f'Successfully subscribed to {plan.name}! '
+                f'Your subscription is now active.'
             )
         
         return redirect('subscriptions:manage')
@@ -360,6 +419,77 @@ def manage_subscription(request):
         ]
     
     # Don't create static demo subscription - show actual state
+    
+    # Also create subscription plans if they don't exist for manage page
+    if not available_plans.exists():
+        from django.db import transaction
+        with transaction.atomic():
+            # Create plans if they don't exist
+            SubscriptionPlan.objects.get_or_create(
+                plan_type='FREE',
+                defaults={
+                    'name': 'Free Plan',
+                    'description': 'Perfect for small teams getting started',
+                    'price': 0.00,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 10,
+                    'max_branches': 1,
+                    'max_attendance_groups': 3,
+                    'has_advanced_reporting': False,
+                    'has_api_access': False,
+                    'has_custom_branding': False,
+                    'has_priority_support': False,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': False,
+                    'sort_order': 1,
+                }
+            )
+            
+            SubscriptionPlan.objects.get_or_create(
+                plan_type='PROFESSIONAL',
+                defaults={
+                    'name': 'Professional Plan',
+                    'description': 'Advanced features for growing businesses',
+                    'price': 29.99,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 0,
+                    'max_branches': 5,
+                    'max_attendance_groups': 0,
+                    'has_advanced_reporting': True,
+                    'has_api_access': True,
+                    'has_custom_branding': False,
+                    'has_priority_support': True,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': True,
+                    'sort_order': 2,
+                }
+            )
+            
+            SubscriptionPlan.objects.get_or_create(
+                plan_type='ENTERPRISE',
+                defaults={
+                    'name': 'Enterprise Plan',
+                    'description': 'Complete solution for large organizations',
+                    'price': 99.99,
+                    'billing_cycle': 'MONTHLY',
+                    'max_employees': 0,
+                    'max_branches': 0,
+                    'max_attendance_groups': 0,
+                    'has_advanced_reporting': True,
+                    'has_api_access': True,
+                    'has_custom_branding': True,
+                    'has_priority_support': True,
+                    'has_data_export': True,
+                    'is_active': True,
+                    'is_featured': False,
+                    'sort_order': 3,
+                }
+            )
+        
+        # Refresh the available_plans queryset
+        available_plans = SubscriptionPlan.objects.filter(is_active=True).order_by('sort_order', 'price')
     
     context = {
         'subscription': subscription,

@@ -3,32 +3,16 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block unauthenticated_content %}
-<!-- Subscription Navbar -->
-<nav class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <div class="flex items-center">
-                <a href="{% url 'subscriptions:home' %}" class="text-2xl font-bold text-indigo-600">AttendanceHub</a>
-            </div>
-            <div class="hidden md:flex space-x-8">
-                <a href="{% url 'subscriptions:home' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</a>
-                <a href="{% url 'subscriptions:pricing' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Pricing</a>
-                <a href="{% url 'subscriptions:contact' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
-                <a href="{% url 'login' %}" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">Login</a>
-            </div>
-        </div>
-    </div>
-</nav>
+{% block content %}
 <!-- Subscribe Header -->
-<section class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white py-16 text-center">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-3xl md:text-5xl font-bold mb-4">Subscribe to {{ plan.name }}</h1>
-            <p class="text-xl text-indigo-100">Complete your subscription and start managing attendance efficiently</p>
-        </div>
+<div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Subscribe to {{ plan.name }}</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Complete your subscription and start managing attendance efficiently
+        </p>
     </div>
-</section>
+</div>
 
 <section class="py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -81,8 +65,8 @@
                     <!-- Payment Method Selection -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {% for method in payment_methods %}
-                        <div class="payment-method-card border-2 border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:shadow-md transition duration-300" data-method="{{ method.id }}">
-                            <input type="radio" name="payment_method_id" value="{{ method.id }}" class="hidden" required>
+                        <label class="payment-method-card border-2 border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:shadow-md transition-all duration-300 block" data-method="{{ method.id }}">
+                            <input type="radio" name="payment_method_id" value="{{ method.id }}" class="sr-only" required>
                             <div class="mb-4">
                                 {% if method.payment_type == 'CREDIT_CARD' %}
                                     <i class="fas fa-credit-card text-3xl text-blue-600"></i>
@@ -98,7 +82,7 @@
                             </div>
                             <h6 class="font-semibold text-gray-900 mb-2">{{ method.name }}</h6>
                             <small class="text-gray-600">{{ method.description|truncatewords:8 }}</small>
-                        </div>
+                        </label>
                         {% endfor %}
                     </div>
 
@@ -228,33 +212,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const agreeTerms = document.getElementById('agreeTerms');
     
-    // Payment method selection
+    // Payment method selection - handle both click and radio change
     paymentCards.forEach(card => {
+        const radioInput = card.querySelector('input[type="radio"]');
+        
+        // Handle card click
         card.addEventListener('click', function() {
-            const methodId = this.dataset.method;
-            
-            // Remove selected class from all cards
-            paymentCards.forEach(c => c.classList.remove('selected'));
-            
-            // Add selected class to clicked card
-            this.classList.add('selected');
-            
-            // Check the radio button
-            this.querySelector('input[type="radio"]').checked = true;
-            
-            // Hide all payment fields
-            paymentFields.forEach(field => field.classList.remove('active'));
-            
-            // Show selected payment fields
-            const selectedFields = document.getElementById(`fields-${methodId}`);
-            if (selectedFields) {
-                selectedFields.classList.add('active');
+            radioInput.checked = true;
+            handlePaymentMethodChange(radioInput.value);
+        });
+        
+        // Handle radio input change
+        radioInput.addEventListener('change', function() {
+            if (this.checked) {
+                handlePaymentMethodChange(this.value);
             }
-            
-            // Update submit button state
-            updateSubmitButton();
         });
     });
+    
+    function handlePaymentMethodChange(methodId) {
+        // Remove selected class from all cards
+        paymentCards.forEach(c => {
+            c.classList.remove('selected');
+            c.classList.remove('border-blue-500', 'bg-blue-50');
+            c.classList.add('border-gray-300');
+        });
+        
+        // Add selected class to clicked card
+        const selectedCard = document.querySelector(`[data-method="${methodId}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+            selectedCard.classList.remove('border-gray-300');
+            selectedCard.classList.add('border-blue-500', 'bg-blue-50');
+        }
+        
+        // Hide all payment fields
+        paymentFields.forEach(field => {
+            field.classList.remove('active');
+            field.classList.add('hidden');
+        });
+        
+        // Show selected payment fields
+        const selectedFields = document.getElementById(`fields-${methodId}`);
+        if (selectedFields) {
+            selectedFields.classList.add('active');
+            selectedFields.classList.remove('hidden');
+        }
+        
+        // Update submit button state
+        updateSubmitButton();
+    }
     
     // Terms checkbox
     agreeTerms.addEventListener('change', updateSubmitButton);

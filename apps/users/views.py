@@ -13,6 +13,7 @@ import json
 from .models import CustomUser, UserRole, UserProfile, UserInvitation
 from apps.companies.models import Company, Branch, Department, DepartmentMembership
 from apps.attendance.models import AttendanceGroup, AttendanceGroupMembership
+from apps.core.mixins import check_employee_limit
 
 User = get_user_model()
 
@@ -177,6 +178,35 @@ def employee_create(request):
         return redirect('users:employee_list')
     
     if request.method == 'POST':
+        # Check subscription limits before creating employee
+        try:
+            from apps.subscriptions.models import CompanySubscription
+            subscription = CompanySubscription.objects.get(company=company)
+            plan = subscription.plan
+            
+            # Check if subscription is active
+            if subscription.status != 'ACTIVE':
+                messages.warning(request, 
+                    'Your subscription is not active. Please renew your subscription to create employees.')
+                return redirect('subscriptions:pricing')
+            
+            # Check employee limit
+            if not check_employee_limit(plan, request):
+                current_count = User.objects.filter(
+                    company=company,
+                    role__in=['EMPLOYEE', 'HR_EMPLOYEE']
+                ).count()
+                limit_text = "unlimited" if plan.max_employees == -1 else str(plan.max_employees)
+                messages.warning(request, 
+                    f'Employee limit reached! Your {plan.name} plan allows {limit_text} employees. '
+                    f'You currently have {current_count} employees. Please upgrade your plan to add more employees.')
+                return redirect('subscriptions:pricing')
+                
+        except CompanySubscription.DoesNotExist:
+            messages.warning(request, 
+                'No active subscription found. Please subscribe to a plan to create employees.')
+            return redirect('subscriptions:pricing')
+        
         try:
             # Get form data
             username = request.POST.get('username')

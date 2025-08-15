@@ -15,6 +15,7 @@ import json
 from .models import Company, Branch, Department, DepartmentMembership
 from apps.users.models import UserRole
 from apps.attendance.models import AttendanceGroup
+from apps.core.mixins import SubscriptionRequiredMixin, check_branch_limit
 
 User = get_user_model()
 
@@ -291,6 +292,32 @@ def branch_create(request):
         return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
+        # Check subscription limits before creating branch
+        try:
+            from apps.subscriptions.models import CompanySubscription
+            subscription = CompanySubscription.objects.get(company=company)
+            plan = subscription.plan
+            
+            # Check if subscription is active
+            if subscription.status != 'ACTIVE':
+                messages.warning(request, 
+                    'Your subscription is not active. Please renew your subscription to create branches.')
+                return redirect('subscriptions:pricing')
+            
+            # Check branch limit
+            if not check_branch_limit(plan, request):
+                current_count = Branch.objects.filter(company=company).count()
+                limit_text = "unlimited" if plan.max_branches == -1 else str(plan.max_branches)
+                messages.warning(request, 
+                    f'Branch limit reached! Your {plan.name} plan allows {limit_text} branches. '
+                    f'You currently have {current_count} branches. Please upgrade your plan to add more branches.')
+                return redirect('subscriptions:pricing')
+                
+        except CompanySubscription.DoesNotExist:
+            messages.warning(request, 
+                'No active subscription found. Please subscribe to a plan to create branches.')
+            return redirect('subscriptions:pricing')
+        
         try:
             # Get form data
             name = request.POST.get('name')

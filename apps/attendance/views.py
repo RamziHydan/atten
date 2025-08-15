@@ -13,6 +13,7 @@ import json
 from .models import AttendanceGroup, CheckIn, AttendanceSummary, Period, AttendanceGroupMembership
 from apps.users.models import CustomUser
 from apps.companies.models import Company, Branch
+from apps.core.mixins import check_attendance_group_limit
 
 
 def get_accessible_employees(user):
@@ -656,6 +657,32 @@ def group_create(request):
         return redirect('attendance:group_list')
     
     if request.method == 'POST':
+        # Check subscription limits before creating attendance group
+        try:
+            from apps.subscriptions.models import CompanySubscription
+            subscription = CompanySubscription.objects.get(company=user.company)
+            plan = subscription.plan
+            
+            # Check if subscription is active
+            if subscription.status != 'ACTIVE':
+                messages.warning(request, 
+                    'Your subscription is not active. Please renew your subscription to create attendance groups.')
+                return redirect('subscriptions:pricing')
+            
+            # Check attendance group limit
+            if not check_attendance_group_limit(plan, request):
+                current_count = AttendanceGroup.objects.filter(company=user.company).count()
+                limit_text = "unlimited" if plan.max_attendance_groups == -1 else str(plan.max_attendance_groups)
+                messages.warning(request, 
+                    f'Attendance group limit reached! Your {plan.name} plan allows {limit_text} attendance groups. '
+                    f'You currently have {current_count} groups. Please upgrade your plan to add more groups.')
+                return redirect('subscriptions:pricing')
+                
+        except CompanySubscription.DoesNotExist:
+            messages.warning(request, 
+                'No active subscription found. Please subscribe to a plan to create attendance groups.')
+            return redirect('subscriptions:pricing')
+        
         try:
             # Get form data
             name = request.POST.get('name', '').strip()
