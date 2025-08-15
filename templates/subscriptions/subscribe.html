@@ -1,0 +1,317 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .subscribe-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+    }
+    
+    .plan-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .payment-form {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .payment-method-card {
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .payment-method-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+    
+    .payment-method-card.selected {
+        border-color: #007bff;
+        background: #f8f9ff;
+    }
+    
+    .payment-fields {
+        display: none;
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    .payment-fields.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Subscribe Header -->
+<section class="subscribe-header text-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Subscribe to {{ plan.name }}</h1>
+                <p class="lead mb-0">Complete your subscription and start managing attendance efficiently</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Plan Summary -->
+                <div class="plan-summary p-4 mb-5">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="fw-bold mb-2">{{ plan.name }}</h4>
+                            <p class="text-muted mb-3">{{ plan.description|truncatewords:20 }}</p>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <small class="text-muted">Features included:</small>
+                                    <ul class="list-unstyled mt-2">
+                                        {% for feature in plan.get_feature_list|slice:":4" %}
+                                        <li><i class="fas fa-check text-success me-2"></i>{{ feature }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-sm-6">
+                                    {% if plan.get_feature_list|length > 4 %}
+                                    <small class="text-muted">&nbsp;</small>
+                                    <ul class="list-unstyled mt-2">
+                                        {% for feature in plan.get_feature_list|slice:"4:" %}
+                                        <li><i class="fas fa-check text-success me-2"></i>{{ feature }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="display-6 fw-bold text-primary">${{ plan.price }}</div>
+                            <div class="text-muted">per {{ plan.billing_cycle|lower }}</div>
+                            {% if not plan.is_enterprise %}
+                            <small class="text-success">14-day free trial</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <div class="payment-form p-5">
+                    <h4 class="mb-4">Choose Payment Method</h4>
+                    
+                    <form method="post" action="{% url 'subscriptions:process_payment' %}" id="paymentForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                        
+                        <!-- Payment Method Selection -->
+                        <div class="row g-3 mb-4">
+                            {% for method in payment_methods %}
+                            <div class="col-md-6">
+                                <div class="payment-method-card p-3 text-center" data-method="{{ method.id }}">
+                                    <input type="radio" name="payment_method_id" value="{{ method.id }}" class="d-none" required>
+                                    <div class="mb-2">
+                                        {% if method.payment_type == 'CREDIT_CARD' %}
+                                            <i class="fas fa-credit-card fa-2x text-primary"></i>
+                                        {% elif method.payment_type == 'BANK_TRANSFER' %}
+                                            <i class="fas fa-university fa-2x text-success"></i>
+                                        {% elif method.payment_type == 'PAYPAL' %}
+                                            <i class="fab fa-paypal fa-2x text-info"></i>
+                                        {% elif method.payment_type == 'CRYPTO' %}
+                                            <i class="fab fa-bitcoin fa-2x text-warning"></i>
+                                        {% else %}
+                                            <i class="fas fa-money-bill fa-2x text-secondary"></i>
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="fw-bold">{{ method.name }}</h6>
+                                    <small class="text-muted">{{ method.description|truncatewords:8 }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Dynamic Payment Fields -->
+                        {% for method in payment_methods %}
+                        <div class="payment-fields" id="fields-{{ method.id }}">
+                            <h5 class="mb-3">{{ method.name }} Details</h5>
+                            <p class="text-muted mb-4">{{ method.description }}</p>
+                            
+                            {% if method.payment_type == 'CREDIT_CARD' %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Card Number</label>
+                                        <input type="text" class="form-control" name="payment_card_number" placeholder="1234 5678 9012 3456">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Expiry Date</label>
+                                        <input type="text" class="form-control" name="payment_expiry" placeholder="MM/YY">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">CVV</label>
+                                        <input type="text" class="form-control" name="payment_cvv" placeholder="123">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Cardholder Name</label>
+                                        <input type="text" class="form-control" name="payment_cardholder_name" placeholder="John Doe">
+                                    </div>
+                                </div>
+                            
+                            {% elif method.payment_type == 'BANK_TRANSFER' %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Bank Name</label>
+                                        <input type="text" class="form-control" name="payment_bank_name" placeholder="Your Bank Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Account Number</label>
+                                        <input type="text" class="form-control" name="payment_account_number" placeholder="Account Number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Routing Number</label>
+                                        <input type="text" class="form-control" name="payment_routing_number" placeholder="Routing Number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Account Holder Name</label>
+                                        <input type="text" class="form-control" name="payment_account_holder" placeholder="Account Holder Name">
+                                    </div>
+                                </div>
+                            
+                            {% elif method.payment_type == 'PAYPAL' %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">PayPal Email</label>
+                                        <input type="email" class="form-control" name="payment_paypal_email" placeholder="your@email.com">
+                                    </div>
+                                </div>
+                            
+                            {% elif method.payment_type == 'CRYPTO' %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Cryptocurrency</label>
+                                        <select class="form-select" name="payment_crypto_type">
+                                            <option value="BTC">Bitcoin (BTC)</option>
+                                            <option value="ETH">Ethereum (ETH)</option>
+                                            <option value="USDT">Tether (USDT)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Wallet Address</label>
+                                        <input type="text" class="form-control" name="payment_wallet_address" placeholder="Wallet Address">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Transaction ID</label>
+                                        <input type="text" class="form-control" name="payment_transaction_id" placeholder="Transaction ID (after payment)">
+                                    </div>
+                                </div>
+                            
+                            {% else %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Payment Details</label>
+                                        <textarea class="form-control" name="payment_details" rows="3" placeholder="Please provide payment details..."></textarea>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row g-3 mt-3">
+                                <div class="col-12">
+                                    <label class="form-label">Additional Notes (Optional)</label>
+                                    <textarea class="form-control" name="payment_notes" rows="2" placeholder="Any additional information..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Terms and Submit -->
+                        <div class="mt-5">
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <a href="{% url 'subscriptions:pricing' %}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Pricing
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn" disabled>
+                                    <i class="fas fa-lock me-2"></i>Complete Subscription
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentCards = document.querySelectorAll('.payment-method-card');
+    const paymentFields = document.querySelectorAll('.payment-fields');
+    const submitBtn = document.getElementById('submitBtn');
+    const agreeTerms = document.getElementById('agreeTerms');
+    
+    // Payment method selection
+    paymentCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const methodId = this.dataset.method;
+            
+            // Remove selected class from all cards
+            paymentCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            this.classList.add('selected');
+            
+            // Check the radio button
+            this.querySelector('input[type="radio"]').checked = true;
+            
+            // Hide all payment fields
+            paymentFields.forEach(field => field.classList.remove('active'));
+            
+            // Show selected payment fields
+            const selectedFields = document.getElementById(`fields-${methodId}`);
+            if (selectedFields) {
+                selectedFields.classList.add('active');
+            }
+            
+            // Update submit button state
+            updateSubmitButton();
+        });
+    });
+    
+    // Terms checkbox
+    agreeTerms.addEventListener('change', updateSubmitButton);
+    
+    function updateSubmitButton() {
+        const methodSelected = document.querySelector('input[name="payment_method_id"]:checked');
+        const termsAccepted = agreeTerms.checked;
+        
+        submitBtn.disabled = !(methodSelected && termsAccepted);
+    }
+    
+    // Form submission
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

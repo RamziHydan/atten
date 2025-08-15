@@ -1,0 +1,300 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .subscription-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+    }
+    
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+    
+    .subscription-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .payment-history {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .upgrade-card {
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .upgrade-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Subscription Header -->
+<section class="subscription-header text-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Manage Subscription</h1>
+                <p class="lead mb-0">View and manage your current subscription plan</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        {% if subscription %}
+        <div class="row">
+            <!-- Current Subscription -->
+            <div class="col-lg-8">
+                <div class="subscription-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">{{ subscription.plan.name }}</h4>
+                                <p class="text-muted mb-0">{{ subscription.plan.description|truncatewords:15 }}</p>
+                            </div>
+                            <div class="text-end">
+                                {% if subscription.status == 'ACTIVE' %}
+                                    <span class="badge bg-success status-badge">Active</span>
+                                {% elif subscription.status == 'TRIAL' %}
+                                    <span class="badge bg-info status-badge">Trial</span>
+                                {% elif subscription.status == 'PENDING' %}
+                                    <span class="badge bg-warning status-badge">Pending</span>
+                                {% elif subscription.status == 'EXPIRED' %}
+                                    <span class="badge bg-danger status-badge">Expired</span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge">{{ subscription.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Pricing</h6>
+                                {% if subscription.plan.is_free %}
+                                    <div class="h5 fw-bold text-success">Free</div>
+                                {% elif subscription.plan.is_enterprise %}
+                                    <div class="h5 fw-bold text-primary">Custom</div>
+                                {% else %}
+                                    <div class="h5 fw-bold">${{ subscription.plan.price }}/{{ subscription.plan.billing_cycle|lower }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">
+                                    {% if subscription.end_date %}
+                                        {% if subscription.status == 'TRIAL' %}
+                                            Trial Ends
+                                        {% else %}
+                                            Expires
+                                        {% endif %}
+                                    {% else %}
+                                        Status
+                                    {% endif %}
+                                </h6>
+                                {% if subscription.end_date %}
+                                    <div class="h6">{{ subscription.end_date|date:"M d, Y" }}</div>
+                                    {% if subscription.days_remaining %}
+                                        <small class="text-muted">{{ subscription.days_remaining }} days remaining</small>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="h6 text-success">No expiry</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-3">Plan Features</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        {% for feature in subscription.plan.get_feature_list|slice:":4" %}
+                                        <li class="mb-1">
+                                            <i class="fas fa-check text-success me-2"></i>{{ feature }}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if subscription.plan.get_feature_list|length > 4 %}
+                                    <ul class="list-unstyled">
+                                        {% for feature in subscription.plan.get_feature_list|slice:"4:" %}
+                                        <li class="mb-1">
+                                            <i class="fas fa-check text-success me-2"></i>{{ feature }}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if not subscription.plan.is_enterprise %}
+                                <a href="{% url 'subscriptions:pricing' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-up me-2"></i>Upgrade Plan
+                                </a>
+                            {% endif %}
+                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                <i class="fas fa-times me-2"></i>Cancel Subscription
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment History</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if payments %}
+                        <div class="payment-history">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Status</th>
+                                            <th>Reference</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payment in payments %}
+                                        <tr>
+                                            <td>{{ payment.created_at|date:"M d, Y" }}</td>
+                                            <td>${{ payment.amount }}</td>
+                                            <td>{{ payment.payment_method.name }}</td>
+                                            <td>
+                                                {% if payment.status == 'APPROVED' %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% elif payment.status == 'PENDING' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% elif payment.status == 'REJECTED' %}
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ payment.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">#{{ payment.id }}</small>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-receipt fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No payment history available</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upgrade Options -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Available Plans</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for plan in available_plans %}
+                        {% if plan.id != subscription.plan.id %}
+                        <div class="upgrade-card p-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0">{{ plan.name }}</h6>
+                                {% if plan.is_free %}
+                                    <span class="badge bg-success">Free</span>
+                                {% elif plan.is_enterprise %}
+                                    <span class="badge bg-primary">Enterprise</span>
+                                {% else %}
+                                    <small class="text-muted">${{ plan.price }}/{{ plan.billing_cycle|lower }}</small>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-3">{{ plan.description|truncatewords:10 }}</p>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Key features:</small>
+                                <ul class="list-unstyled small mt-1">
+                                    {% for feature in plan.get_feature_list|slice:":3" %}
+                                    <li><i class="fas fa-check text-success me-1"></i>{{ feature }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            
+                            {% if plan.is_enterprise %}
+                                <a href="{% url 'subscriptions:contact' %}" class="btn btn-outline-primary btn-sm w-100">
+                                    Contact Sales
+                                </a>
+                            {% else %}
+                                <a href="{% url 'subscriptions:subscribe' plan.id %}" class="btn btn-primary btn-sm w-100">
+                                    {% if plan.price > subscription.plan.price %}Upgrade{% else %}Switch{% endif %}
+                                </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- No Subscription -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="card">
+                    <div class="card-body py-5">
+                        <i class="fas fa-credit-card fa-4x text-muted mb-4"></i>
+                        <h3 class="mb-3">No Active Subscription</h3>
+                        <p class="text-muted mb-4">You don't have an active subscription yet. Choose a plan to get started with AttendanceHub.</p>
+                        <a href="{% url 'subscriptions:pricing' %}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-arrow-right me-2"></i>View Plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Cancel Subscription Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel your subscription? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Your subscription will remain active until the end of the current billing period.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Subscription</button>
+                <button type="button" class="btn btn-danger">Cancel Subscription</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

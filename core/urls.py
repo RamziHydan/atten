@@ -22,21 +22,9 @@ from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from apps.users.auth_views import CustomLoginView
 
-# Redirect root based on user role
-def root_redirect(request):
-    if request.user.is_authenticated:
-        # Redirect employees to check-in, others to dashboard
-        if request.user.role == 'EMPLOYEE':
-            return redirect('attendance:check_in')
-        return redirect('dashboard:dashboard')
-    return redirect('login')
-
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
-    
-    # Root redirect
-    path('', root_redirect, name='root'),
     
     # Authentication URLs
     path('login/', CustomLoginView.as_view(template_name='auth/login.html'), name='login'),
@@ -44,6 +32,7 @@ urlpatterns = [
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     
     # App URLs
+    path('', include('apps.subscriptions.urls')),  # Home page and subscription management
     path('dashboard/', include('apps.dashboard.urls')),
     path('attendance/', include('apps.attendance.urls')),
     path('companies/', include('apps.companies.urls')),
