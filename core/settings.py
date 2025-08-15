@@ -30,7 +30,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 # For PythonAnywhere deployment - add your username here
 # Example: ALLOWED_HOSTS = ['yourusername.pythonanywhere.com', 'localhost', '127.0.0.1']
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'ramzihaidan537.pythonanywhere.com,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '7hader.pythonanywhere.com,localhost,127.0.0.1').split(',')
 
 
 # Application definition
