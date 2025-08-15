@@ -3,6 +3,97 @@
 
 {% block title %}{{ title }}{% endblock %}
 
+{% block content %}
+<!-- Authenticated User Content -->
+<div class="bg-white">
+    <!-- Pricing Header -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Select the perfect plan for your company's attendance management needs
+            </p>
+        </div>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {% for plan in plans %}
+                <div class="relative bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300 {% if plan.is_featured %}ring-2 ring-blue-600 scale-105{% endif %}">
+                    {% if plan.is_featured %}
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="p-8 text-center h-full flex flex-col">
+                        <h3 class="text-xl font-bold uppercase mb-4 text-gray-900">{{ plan.name }}</h3>
+                        <div class="mb-6">
+                            {% if plan.is_free %}
+                                <div class="text-5xl font-bold text-green-600">Free</div>
+                                <small class="text-gray-500">Forever</small>
+                            {% else %}
+                                <div class="text-5xl font-bold text-gray-900">${{ plan.price }}</div>
+                                <small class="text-gray-500">per {{ plan.billing_cycle }}</small>
+                            {% endif %}
+                        </div>
+                        <ul class="text-left space-y-3 mb-8 flex-grow">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">
+                                    {% if plan.max_employees == -1 %}
+                                        Unlimited employees
+                                    {% else %}
+                                        Up to {{ plan.max_employees }} employees
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Location-based check-ins</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Real-time reporting</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Multi-branch support</span>
+                            </li>
+                            {% if not plan.is_free %}
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Advanced analytics</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Priority support</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto">
+                            {% if plan.is_free %}
+                                <a href="{% url 'subscriptions:subscribe' plan.id %}" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                                    Get Started Free
+                                </a>
+                            {% else %}
+                                <a href="{% url 'subscriptions:subscribe' plan.id %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block mb-3">
+                                    Start {{ plan.billing_cycle|title }} Plan
+                                </a>
+                                <small class="text-gray-500">14-day free trial</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block unauthenticated_content %}
 <!-- Subscription Navbar -->
 <nav class="bg-white shadow-sm border-b border-gray-200">
