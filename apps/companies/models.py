@@ -54,15 +54,6 @@ class Company(models.Model):
         default=True,
         help_text="Whether this company account is active"
     )
-    subscription_plan = models.CharField(
-        max_length=50,
-        default='basic',
-        help_text="Current subscription plan"
-    )
-    max_employees = models.PositiveIntegerField(
-        default=50,
-        help_text="Maximum number of employees allowed"
-    )
     default_radius = models.PositiveIntegerField(
         default=100,
         help_text="Default radius in meters for attendance check-in/out geofence (applies to branches without specific radius)"
@@ -87,7 +78,19 @@ class Company(models.Model):
     @property
     def can_add_employee(self):
         """Check if company can add more employees based on subscription"""
-        return self.employee_count < self.max_employees
+        try:
+            from apps.subscriptions.utils import get_company_subscription
+            subscription = get_company_subscription(self)
+            if not subscription:
+                return False
+            
+            plan = subscription.plan
+            if plan.max_employees == 0:  # Unlimited
+                return True
+            
+            return self.employee_count < plan.max_employees
+        except:
+            return False
     
     def get_branches_count(self):
         """Get total number of branches for this company"""

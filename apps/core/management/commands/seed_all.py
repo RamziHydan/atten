@@ -4,6 +4,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from apps.companies.models import Company, Branch, Department, DepartmentMembership
 from apps.attendance.models import AttendanceGroup, Period, AttendanceGroupMembership, CheckIn
+from apps.subscriptions.models import SubscriptionPlan, CompanySubscription
 
 User = get_user_model()
 
@@ -37,6 +38,7 @@ class Command(BaseCommand):
         # Run seeders in correct dependency order
         seeder_sequence = [
             ('seed_users', 'Users (Super Admin, Company Owners, HR Managers, Employees)', not options['skip_users']),
+            ('seed_subscription_plans', 'Subscription Plans', True),
             ('seed_companies', 'Companies', True),
             ('seed_branches', 'Branches', True),
             ('seed_departments', 'Departments', True),
@@ -62,28 +64,54 @@ class Command(BaseCommand):
         self.display_final_summary()
 
     def clear_all_data(self):
-        """Clear all seeded data by running individual seeder clear commands"""
+        """Clear all seeded data directly from database in proper order"""
         try:
-            # Use individual seeders to clear data in proper order
-            # Each seeder knows how to handle its own deletion properly
-            clear_commands = [
-                'seed_checkins',
-                'seed_assignments', 
-                'seed_periods',
-                'seed_groups',
-                'seed_departments',
-                'seed_branches',
-                'seed_companies',
-                'seed_users'
-            ]
+            from apps.subscriptions.models import CompanySubscription, Payment
             
-            for command in clear_commands:
-                try:
-                    call_command(command, '--clear')
-                except Exception as e:
-                    self.stdout.write(self.style.WARNING(f'Warning clearing {command}: {str(e)}'))
-                    # Continue with other commands
-                
+            self.stdout.write('Clearing all data in dependency order...')
+            
+            # Clear in reverse dependency order
+            CheckIn.objects.all().delete()
+            self.stdout.write('  - Cleared check-ins')
+            
+            AttendanceGroupMembership.objects.all().delete()
+            self.stdout.write('  - Cleared attendance group memberships')
+            
+            Period.objects.all().delete()
+            self.stdout.write('  - Cleared periods')
+            
+            AttendanceGroup.objects.all().delete()
+            self.stdout.write('  - Cleared attendance groups')
+            
+            DepartmentMembership.objects.all().delete()
+            self.stdout.write('  - Cleared department memberships')
+            
+            Department.objects.all().delete()
+            self.stdout.write('  - Cleared departments')
+            
+            Branch.objects.all().delete()
+            self.stdout.write('  - Cleared branches')
+            
+            # Clear subscription-related data
+            Payment.objects.all().delete()
+            self.stdout.write('  - Cleared payments')
+            
+            CompanySubscription.objects.all().delete()
+            self.stdout.write('  - Cleared company subscriptions')
+            
+            Company.objects.all().delete()
+            self.stdout.write('  - Cleared companies')
+            
+            # Clear users (except superuser if exists)
+            User.objects.filter(is_superuser=False).delete()
+            self.stdout.write('  - Cleared users (kept superusers)')
+            
+            # Clear subscription plans and payment methods (no dependencies)
+            from apps.subscriptions.models import SubscriptionPlan, PaymentMethod
+            SubscriptionPlan.objects.all().delete()
+            PaymentMethod.objects.all().delete()
+            self.stdout.write('  - Cleared subscription plans and payment methods')
+            
             self.stdout.write(self.style.SUCCESS('SUCCESS: All data cleared successfully'))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'ERROR: Error clearing data: {str(e)}'))
@@ -108,6 +136,8 @@ class Command(BaseCommand):
         periods = Period.objects.all()
         assignments = AttendanceGroupMembership.objects.filter(is_active=True)
         checkins = CheckIn.objects.all()
+        subscription_plans = SubscriptionPlan.objects.all()
+        subscriptions = CompanySubscription.objects.all()
 
         summary = f"""
 DATA SUMMARY:
@@ -116,6 +146,8 @@ DATA SUMMARY:
 |   +-- Company Managers: {users.filter(role='COMPANY_MANAGER').count()}
 |   +-- HR Employees: {users.filter(role='HR_EMPLOYEE').count()}
 |   +-- Employees: {users.filter(role='EMPLOYEE').count()}
++-- Subscription Plans: {subscription_plans.count()}
++-- Company Subscriptions: {subscriptions.count()}
 +-- Companies: {companies.count()}
 +-- Branches: {branches.count()} ({branches.count()//2} per company)
 +-- Departments: {departments.count()} ({departments.count()//4} per branch)
@@ -132,10 +164,16 @@ COMPANY BREAKDOWN:"""
             company_departments = departments.filter(branch__company=company)
             company_groups = groups.filter(company=company)
             company_assignments = assignments.filter(attendance_group__company=company)
+            company_subscription = subscriptions.filter(company=company).first()
+
+            subscription_info = "No Subscription"
+            if company_subscription:
+                subscription_info = f"{company_subscription.plan.name} ({company_subscription.status})"
 
             summary += f"""
 +-- {company.name}:
 |   +-- Owner: {company.owner.get_full_name()}
+|   +-- Subscription: {subscription_info}
 |   +-- Employees: {company_users.count()}
 |   +-- Branches: {company_branches.count()}
 |   +-- Departments: {company_departments.count()}

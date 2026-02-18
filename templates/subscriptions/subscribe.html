@@ -1,0 +1,321 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- Subscribe Header -->
+<div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Subscribe to {{ plan.name }}</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Complete your subscription and start managing attendance efficiently
+        </p>
+    </div>
+</div>
+
+<section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Plan Summary -->
+            <div class="bg-gray-50 rounded-xl p-8 mb-8 border-l-4 border-blue-600">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-2">
+                        <h4 class="text-2xl font-bold mb-3 text-gray-900">{{ plan.name }}</h4>
+                        <p class="text-gray-600 mb-6">{{ plan.description|truncatewords:20 }}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <small class="text-gray-500 font-medium">Features included:</small>
+                                <ul class="mt-2 space-y-1">
+                                    {% for feature in plan.get_feature_list|slice:":4" %}
+                                    <li class="flex items-center"><i class="fas fa-check text-green-600 mr-2"></i><span class="text-gray-700">{{ feature }}</span></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div>
+                                {% if plan.get_feature_list|length > 4 %}
+                                <small class="text-gray-500 font-medium">&nbsp;</small>
+                                <ul class="mt-2 space-y-1">
+                                    {% for feature in plan.get_feature_list|slice:"4:" %}
+                                    <li class="flex items-center"><i class="fas fa-check text-green-600 mr-2"></i><span class="text-gray-700">{{ feature }}</span></li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <div class="text-4xl font-bold text-blue-600">${{ plan.price }}</div>
+                        <div class="text-gray-500">per {{ plan.billing_cycle|lower }}</div>
+                        {% if not plan.is_enterprise %}
+                        <small class="text-green-600 font-medium">14-day free trial</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h4 class="text-2xl font-bold mb-6 text-gray-900">Choose Payment Method</h4>
+                
+                <form method="post" action="{% url 'subscriptions:process_payment' %}" id="paymentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                    
+                    <!-- Payment Method Selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        {% for method in payment_methods %}
+                        <label class="payment-method-card border-2 border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:shadow-md transition-all duration-300 block" data-method="{{ method.id }}">
+                            <input type="radio" name="payment_method_id" value="{{ method.id }}" class="sr-only" required>
+                            <div class="mb-4">
+                                {% if method.payment_type == 'CREDIT_CARD' %}
+                                    <i class="fas fa-credit-card text-3xl text-blue-600"></i>
+                                {% elif method.payment_type == 'BANK_TRANSFER' %}
+                                    <i class="fas fa-university text-3xl text-green-600"></i>
+                                {% elif method.payment_type == 'PAYPAL' %}
+                                    <i class="fab fa-paypal text-3xl text-cyan-600"></i>
+                                {% elif method.payment_type == 'CRYPTO' %}
+                                    <i class="fab fa-bitcoin text-3xl text-yellow-600"></i>
+                                {% else %}
+                                    <i class="fas fa-money-bill text-3xl text-gray-600"></i>
+                                {% endif %}
+                            </div>
+                            <h6 class="font-semibold text-gray-900 mb-2">{{ method.name }}</h6>
+                            <small class="text-gray-600">{{ method.description|truncatewords:8 }}</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Dynamic Payment Fields -->
+                    {% for method in payment_methods %}
+                    <div class="payment-fields hidden" id="fields-{{ method.id }}">
+                        <h5 class="text-xl font-semibold mb-4 text-gray-900">{{ method.name }} Details</h5>
+                        <p class="text-gray-600 mb-6">{{ method.description }}</p>
+                        
+                        {% if method.payment_type == 'CREDIT_CARD' %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="payment_card_number" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="payment_expiry" placeholder="MM/YY">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="payment_cvv" placeholder="123">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" name="payment_cardholder_name" placeholder="John Doe">
+                                </div>
+                            </div>
+                            
+                            {% elif method.payment_type == 'BANK_TRANSFER' %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Bank Name</label>
+                                        <input type="text" class="form-control" name="payment_bank_name" placeholder="Your Bank Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Account Number</label>
+                                        <input type="text" class="form-control" name="payment_account_number" placeholder="Account Number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Routing Number</label>
+                                        <input type="text" class="form-control" name="payment_routing_number" placeholder="Routing Number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Account Holder Name</label>
+                                        <input type="text" class="form-control" name="payment_account_holder" placeholder="Account Holder Name">
+                                    </div>
+                                </div>
+                            
+                            {% elif method.payment_type == 'PAYPAL' %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">PayPal Email</label>
+                                        <input type="email" class="form-control" name="payment_paypal_email" placeholder="your@email.com">
+                                    </div>
+                                </div>
+                            
+                            {% elif method.payment_type == 'CRYPTO' %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Cryptocurrency</label>
+                                        <select class="form-select" name="payment_crypto_type">
+                                            <option value="BTC">Bitcoin (BTC)</option>
+                                            <option value="ETH">Ethereum (ETH)</option>
+                                            <option value="USDT">Tether (USDT)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Wallet Address</label>
+                                        <input type="text" class="form-control" name="payment_wallet_address" placeholder="Wallet Address">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Transaction ID</label>
+                                        <input type="text" class="form-control" name="payment_transaction_id" placeholder="Transaction ID (after payment)">
+                                    </div>
+                                </div>
+                            
+                            {% else %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Payment Details</label>
+                                        <textarea class="form-control" name="payment_details" rows="3" placeholder="Please provide payment details..."></textarea>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row g-3 mt-3">
+                                <div class="col-12">
+                                    <label class="form-label">Additional Notes (Optional)</label>
+                                    <textarea class="form-control" name="payment_notes" rows="2" placeholder="Any additional information..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Terms and Submit -->
+                        <div class="mt-5">
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <a href="{% url 'subscriptions:pricing' %}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Pricing
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn" disabled>
+                                    <i class="fas fa-lock me-2"></i>Complete Subscription
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentCards = document.querySelectorAll('.payment-method-card');
+    const paymentFields = document.querySelectorAll('.payment-fields');
+    const submitBtn = document.getElementById('submitBtn');
+    const agreeTerms = document.getElementById('agreeTerms');
+    
+    // Payment method selection - handle both click and radio change
+    paymentCards.forEach(card => {
+        const radioInput = card.querySelector('input[type="radio"]');
+        
+        // Handle card click
+        card.addEventListener('click', function() {
+            radioInput.checked = true;
+            handlePaymentMethodChange(radioInput.value);
+        });
+        
+        // Handle radio input change
+        radioInput.addEventListener('change', function() {
+            if (this.checked) {
+                handlePaymentMethodChange(this.value);
+            }
+        });
+    });
+    
+    function handlePaymentMethodChange(methodId) {
+        // Remove selected class from all cards
+        paymentCards.forEach(c => {
+            c.classList.remove('selected');
+            c.classList.remove('border-blue-500', 'bg-blue-50');
+            c.classList.add('border-gray-300');
+        });
+        
+        // Add selected class to clicked card
+        const selectedCard = document.querySelector(`[data-method="${methodId}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+            selectedCard.classList.remove('border-gray-300');
+            selectedCard.classList.add('border-blue-500', 'bg-blue-50');
+        }
+        
+        // Hide all payment fields
+        paymentFields.forEach(field => {
+            field.classList.remove('active');
+            field.classList.add('hidden');
+        });
+        
+        // Show selected payment fields
+        const selectedFields = document.getElementById(`fields-${methodId}`);
+        if (selectedFields) {
+            selectedFields.classList.add('active');
+            selectedFields.classList.remove('hidden');
+        }
+        
+        // Update submit button state
+        updateSubmitButton();
+    }
+    
+    // Terms checkbox
+    agreeTerms.addEventListener('change', updateSubmitButton);
+    
+    function updateSubmitButton() {
+        const methodSelected = document.querySelector('input[name="payment_method_id"]:checked');
+        const termsAccepted = agreeTerms.checked;
+        
+        submitBtn.disabled = !(methodSelected && termsAccepted);
+    }
+    
+    // Form submission
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold text-white mb-4">7hader</h3>
+                <p class="text-gray-300 mb-4">Smart employee attendance management with location-based check-ins, real-time reporting, and comprehensive analytics.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Product</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:home' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                    <li><a href="{% url 'subscriptions:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">API</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'subscriptions:contact' %}" class="text-gray-300 hover:text-white">Contact</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400">© 2024 7hader. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}

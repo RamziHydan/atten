@@ -4,6 +4,9 @@ from . import views
 app_name = 'companies'
 
 urlpatterns = [
+    # Company registration
+    path('register/', views.company_register, name='register'),
+    
     # Company management
     path('<int:company_id>/', views.company_detail, name='company_detail'),
     path('<int:company_id>/edit/', views.company_edit, name='company_edit'),

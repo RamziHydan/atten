@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from apps.companies.models import Company
+from apps.subscriptions.models import SubscriptionPlan, CompanySubscription
 from faker import Faker
 
 User = get_user_model()
@@ -56,8 +57,7 @@ class Command(BaseCommand):
                 'phone_number': '+15550101',
                 'email': 'contact@techcorp.com',
                 'address': '123 Tech Street, Silicon Valley, CA 94000',
-                'subscription_plan': 'premium',
-                'max_employees': 100,
+                'subscription_plan_type': 'PROFESSIONAL',
                 'default_radius': 150
             },
             {
@@ -67,8 +67,7 @@ class Command(BaseCommand):
                 'phone_number': '+15550202',
                 'email': 'hello@innovatelab.com',
                 'address': '456 Innovation Blvd, Austin, TX 78701',
-                'subscription_plan': 'basic',
-                'max_employees': 50,
+                'subscription_plan_type': 'FREE',
                 'default_radius': 100
             }
         ]
@@ -81,11 +80,28 @@ class Command(BaseCommand):
                 phone_number=data['phone_number'],
                 email=data['email'],
                 address=data['address'],
-                subscription_plan=data['subscription_plan'],
-                max_employees=data['max_employees'],
                 default_radius=data['default_radius'],
                 owner=owners[i]
             )
+            
+            # Create subscription for the company
+            try:
+                subscription_plan = SubscriptionPlan.objects.get(
+                    plan_type=data['subscription_plan_type']
+                )
+                subscription = CompanySubscription.objects.create(
+                    company=company,
+                    plan=subscription_plan,
+                    status='ACTIVE'
+                )
+                self.stdout.write(f'Created subscription: {subscription_plan.name} for {company.name}')
+            except SubscriptionPlan.DoesNotExist:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'Subscription plan {data["subscription_plan_type"]} not found for {company.name}. '
+                        'Please run seed_subscription_plans first.'
+                    )
+                )
             
             # Update the owner's company field
             owner = owners[i]

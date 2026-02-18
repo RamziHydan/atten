@@ -6,14 +6,16 @@ from django.core.paginator import Paginator
 from django.http import Http404, JsonResponse
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.db import transaction
 import json
 
 from .models import Company, Branch, Department, DepartmentMembership
 from apps.users.models import UserRole
 from apps.attendance.models import AttendanceGroup
+from apps.core.mixins import SubscriptionRequiredMixin, check_branch_limit
 
 User = get_user_model()
 
@@ -26,6 +28,85 @@ def company_owner_required(user):
     """Check if user owns the company or is super admin"""
     return user.is_authenticated and (user.role == UserRole.SUPER_ADMIN or 
                                     (hasattr(user, 'owned_company') and user.owned_company))
+
+def company_register(request):
+    """Register a new company and create company owner account"""
+    if request.user.is_authenticated:
+        messages.info(request, 'You are already logged in.')
+        return redirect('dashboard:dashboard')
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Get form data
+                company_name = request.POST.get('company_name', '').strip()
+                owner_first_name = request.POST.get('first_name', '').strip()
+                owner_last_name = request.POST.get('last_name', '').strip()
+                owner_email = request.POST.get('email', '').strip()
+                owner_username = request.POST.get('username', '').strip()
+                password = request.POST.get('password', '')
+                confirm_password = request.POST.get('confirm_password', '')
+                
+                # Validation
+                if not all([company_name, owner_first_name, owner_last_name, owner_email, owner_username, password]):
+                    messages.error(request, 'All fields are required.')
+                    return render(request, 'companies/register.html')
+                
+                if password != confirm_password:
+                    messages.error(request, 'Passwords do not match.')
+                    return render(request, 'companies/register.html')
+                
+                if len(password) < 8:
+                    messages.error(request, 'Password must be at least 8 characters long.')
+                    return render(request, 'companies/register.html')
+                
+                # Check if company name already exists
+                if Company.objects.filter(name=company_name).exists():
+                    messages.error(request, f'A company named "{company_name}" already exists.')
+                    return render(request, 'companies/register.html')
+                
+                # Check if username already exists
+                if User.objects.filter(username=owner_username).exists():
+                    messages.error(request, f'Username "{owner_username}" is already taken.')
+                    return render(request, 'companies/register.html')
+                
+                # Check if email already exists
+                if User.objects.filter(email=owner_email).exists():
+                    messages.error(request, f'Email "{owner_email}" is already registered.')
+                    return render(request, 'companies/register.html')
+                
+                # Create company owner user
+                owner = User.objects.create_user(
+                    username=owner_username,
+                    email=owner_email,
+                    password=password,
+                    first_name=owner_first_name,
+                    last_name=owner_last_name,
+                    role=UserRole.COMPANY_MANAGER
+                )
+                
+                # Create company
+                company = Company.objects.create(
+                    name=company_name,
+                    owner=owner,
+                    default_radius=100  # Default 100 meters
+                )
+                
+                # Associate user with company
+                owner.company = company
+                owner.save()
+                
+                # Log the user in
+                login(request, owner)
+                
+                messages.success(request, f'Welcome to 7hader! Your company "{company_name}" has been registered successfully.')
+                return redirect('dashboard:dashboard')
+                
+        except Exception as e:
+            messages.error(request, f'Registration failed: {str(e)}')
+    
+    # GET request - show registration form
+    return render(request, 'companies/register.html')
 
 @login_required
 def company_detail(request, company_id):
@@ -211,6 +292,32 @@ def branch_create(request):
         return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
+        # Check subscription limits before creating branch
+        try:
+            from apps.subscriptions.models import CompanySubscription
+            subscription = CompanySubscription.objects.get(company=company)
+            plan = subscription.plan
+            
+            # Check if subscription is active
+            if subscription.status != 'ACTIVE':
+                messages.warning(request, 
+                    'Your subscription is not active. Please renew your subscription to create branches.')
+                return redirect('subscriptions:pricing')
+            
+            # Check branch limit
+            if not check_branch_limit(plan, request):
+                current_count = Branch.objects.filter(company=company).count()
+                limit_text = "unlimited" if plan.max_branches == -1 else str(plan.max_branches)
+                messages.warning(request, 
+                    f'Branch limit reached! Your {plan.name} plan allows {limit_text} branches. '
+                    f'You currently have {current_count} branches. Please upgrade your plan to add more branches.')
+                return redirect('subscriptions:pricing')
+                
+        except CompanySubscription.DoesNotExist:
+            messages.warning(request, 
+                'No active subscription found. Please subscribe to a plan to create branches.')
+            return redirect('subscriptions:pricing')
+        
         try:
             # Get form data
             name = request.POST.get('name')

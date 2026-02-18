@@ -9,10 +9,10 @@ class CompanyAdmin(admin.ModelAdmin):
     Admin interface for Company model.
     """
     list_display = (
-        'name', 'owner', 'subscription_plan', 'employee_count_display',
-        'max_employees', 'is_active', 'created_at'
+        'name', 'owner', 'subscription_display', 'employee_count_display',
+        'is_active', 'created_at'
     )
-    list_filter = ('subscription_plan', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
     search_fields = ('name', 'owner__username', 'owner__email', 'email')
     ordering = ('-created_at',)
     
@@ -23,8 +23,8 @@ class CompanyAdmin(admin.ModelAdmin):
         ('Contact Information', {
             'fields': ('email', 'phone_number', 'website', 'address')
         }),
-        ('Subscription & Limits', {
-            'fields': ('subscription_plan', 'max_employees', 'is_active')
+        ('Settings', {
+            'fields': ('default_radius', 'is_active')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -34,19 +34,43 @@ class CompanyAdmin(admin.ModelAdmin):
     
     readonly_fields = ('created_at', 'updated_at')
     
+    def subscription_display(self, obj):
+        try:
+            from apps.subscriptions.utils import get_company_subscription
+            subscription = get_company_subscription(obj)
+            if subscription:
+                status_color = 'green' if subscription.is_active else 'red'
+                return format_html(
+                    '<span style="color: {};">{}</span>',
+                    status_color, subscription.plan.name
+                )
+            return format_html('<span style="color: red;">No Subscription</span>')
+        except:
+            return 'Unknown'
+    subscription_display.short_description = 'Subscription'
+    
     def employee_count_display(self, obj):
-        count = obj.employee_count
-        max_count = obj.max_employees
-        if count >= max_count:
-            color = 'red'
-        elif count >= max_count * 0.8:
-            color = 'orange'
-        else:
-            color = 'green'
-        return format_html(
-            '<span style="color: {};">{}/{}</span>',
-            color, count, max_count
-        )
+        try:
+            from apps.subscriptions.utils import get_company_subscription
+            subscription = get_company_subscription(obj)
+            count = obj.employee_count
+            
+            if subscription and subscription.plan.max_employees > 0:
+                max_count = subscription.plan.max_employees
+                if count >= max_count:
+                    color = 'red'
+                elif count >= max_count * 0.8:
+                    color = 'orange'
+                else:
+                    color = 'green'
+                return format_html(
+                    '<span style="color: {};">{}/{}</span>',
+                    color, count, max_count
+                )
+            else:
+                return format_html('<span style="color: green;">{}/∞</span>', count)
+        except:
+            return str(obj.employee_count)
     employee_count_display.short_description = 'Employees'
     
     def get_queryset(self, request):

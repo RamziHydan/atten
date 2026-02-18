@@ -11,8 +11,7 @@ env/
 
 # --- Django & Python ---
 # Ignore the local SQLite database
-db.sqlite3
-db.sqlite3-journal
+
 
 # Ignore collected static files and user-uploaded media
 staticfiles/
@@ -45,6 +44,7 @@ htmlcov/
 # --- System Files ---
 # Mac
 .DS_Store
-
+db.sqlite3
+db.sqlite3-journal
 # Windows
 Thumbs.db
